@@ -1,37 +1,83 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+// app/_layout.tsx
+import React, { useEffect, useState } from "react";
+import { createDrawerNavigator } from "@react-navigation/drawer";
+import { createStackNavigator } from "@react-navigation/stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+// Import screens
+import Home from "./screens/Home";
+import Profile from "./screens/Profile";
+import ProjectList from "./screens/ProjectList";
+import About from "./screens/About";
+import ProjectHome from "./screens/tabs/ProjectHome";
+import Map from "./screens/tabs/Map";
+import QRScanner from "./screens/tabs/QRScanner";
+import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+// Create the navigators
+const Drawer = createDrawerNavigator();
+const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+// Project-specific Tab Navigator
+function ProjectTabNavigator() {
+  return (
+    <Tab.Navigator initialRouteName="ProjectHome">
+      <Tab.Screen name="Project Home" component={ProjectHome} />
+      <Tab.Screen name="Map" component={Map} />
+      <Tab.Screen name="QR Scanner" component={QRScanner} />
+    </Tab.Navigator>
+  );
+}
 
+// Stack Navigator for the Project List and Details
+function ProjectStackNavigator() {
+  return (
+    <Stack.Navigator initialRouteName="ProjectList">
+      <Stack.Screen name="Project List" component={ProjectList} />
+      <Stack.Screen name="Project Details" component={ProjectTabNavigator} />
+    </Stack.Navigator>
+  );
+}
+
+// Drawer Navigator for broader navigation
+export default function AppLayout() {
+  const [username, setUsername] = useState("");
+  const navigation = useNavigation();
+
+  // Load the saved username from AsyncStorage
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+    const loadUsername = async () => {
+      try {
+        const savedUsername = await AsyncStorage.getItem(
+          "participant_username"
+        );
+        if (savedUsername) {
+          setUsername(savedUsername);
+          navigation.setOptions({ title: savedUsername });
+        }
+      } catch (error) {
+        console.error("Failed to load username:", error);
+      }
+    };
 
-  if (!loaded) {
-    return null;
-  }
+    loadUsername();
+  }, [navigation]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </ThemeProvider>
+    <Drawer.Navigator
+      screenOptions={{
+        headerTitle: username ? `Welcome, ${username}` : "Welcome",
+      }}
+    >
+      <Drawer.Screen name="screens/Home" component={Home} />
+      <Drawer.Screen name="screens/Profile" component={Profile} />
+      <Drawer.Screen
+        name="screens/ProjectList"
+        component={ProjectStackNavigator}
+      />
+      <Drawer.Screen name="screens/About" component={About} />
+    </Drawer.Navigator>
   );
 }
