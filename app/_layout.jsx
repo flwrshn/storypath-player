@@ -1,5 +1,5 @@
 // app/_layout.tsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -12,8 +12,6 @@ import About from "./screens/About";
 import ProjectHome from "./screens/tabs/ProjectHome";
 import Map from "./screens/tabs/Map";
 import QRScanner from "./screens/tabs/QRScanner";
-import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Create the navigators
 const Drawer = createDrawerNavigator();
@@ -43,34 +41,8 @@ function ProjectStackNavigator() {
 
 // Drawer Navigator for broader navigation
 export default function AppLayout() {
-  const [username, setUsername] = useState("");
-  const navigation = useNavigation();
-
-  // Load the saved username from AsyncStorage
-  useEffect(() => {
-    const loadUsername = async () => {
-      try {
-        const savedUsername = await AsyncStorage.getItem(
-          "participant_username"
-        );
-        if (savedUsername) {
-          setUsername(savedUsername);
-          navigation.setOptions({ title: savedUsername });
-        }
-      } catch (error) {
-        console.error("Failed to load username:", error);
-      }
-    };
-
-    loadUsername();
-  }, [navigation]);
-
   return (
-    <Drawer.Navigator
-      screenOptions={{
-        headerTitle: username ? `Welcome, ${username}` : "Welcome",
-      }}
-    >
+    <Drawer.Navigator initialRouteName="Home">
       <Drawer.Screen name="screens/Home" component={Home} />
       <Drawer.Screen name="screens/Profile" component={Profile} />
       <Drawer.Screen
