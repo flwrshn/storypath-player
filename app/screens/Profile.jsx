@@ -1,5 +1,3 @@
-// app/screens/Profile.jsx
-
 import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
@@ -15,8 +13,6 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
-import { createTracking } from "@/services/api"; // Adjust import path as needed
 
 // Get screen dimensions for styling
 const { height } = Dimensions.get("window");
@@ -24,7 +20,6 @@ const { height } = Dimensions.get("window");
 const Profile = () => {
   const [photo, setPhoto] = useState(null);
   const [username, setUsername] = useState("");
-  const navigation = useNavigation();
 
   // Load saved username and photo from AsyncStorage on mount
   useEffect(() => {
@@ -80,21 +75,13 @@ const Profile = () => {
     setUsername(text);
   };
 
-  // Save username when user presses 'Save'
+  // Save profile data when user presses 'Save'
   const handleSavePress = async () => {
-    if (!username.trim()) {
-      Alert.alert("Error", "Username is required!");
-      return;
-    }
-
     try {
-      // Save the username to AsyncStorage
+      // Save the username and photo to AsyncStorage
       await saveProfileData(username, null);
 
-      // Send the username to the Tracking API
-      await createTracking({ participant_username: username });
-
-      Alert.alert("Success", "Profile updated and tracking initialized!");
+      Alert.alert("Success", "Profile updated!");
     } catch (error) {
       console.error("Failed to update profile:", error);
       Alert.alert("Error", "Failed to update profile. Please try again.");

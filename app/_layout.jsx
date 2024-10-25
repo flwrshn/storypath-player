@@ -29,8 +29,12 @@ function ProjectTabNavigator({ route }) {
         component={ProjectHome}
         initialParams={{ project }}
       />
-      <Tab.Screen name="Map" component={Map} />
-      <Tab.Screen name="QR Scanner" component={QRScanner} />
+      <Tab.Screen name="Map" component={Map} initialParams={{ project }} />
+      <Tab.Screen
+        name="QR Scanner"
+        component={QRScanner}
+        initialParams={{ project }}
+      />
     </Tab.Navigator>
   );
 }

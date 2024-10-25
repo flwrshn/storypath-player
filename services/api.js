@@ -60,9 +60,7 @@ export const getPublishedProjects = async () => {
   // Fetch participant count for each project
   const projectsWithParticipants = await Promise.all(
     projects.map(async (project) => {
-      const participants = await apiRequest(
-        `tracking?project_id=eq.${project.id}`
-      );
+      const participants = await getTrackings(project.id);
       return {
         ...project,
         participantCount: participants.length,
