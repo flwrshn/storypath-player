@@ -1,13 +1,18 @@
 import { View, Text, StyleSheet, Button } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { getLocation } from "@/services/api"; // Import API functions
 
 const QRScanner = ({ route }) => {
   const { project } = route.params;
+
+  // TODO:
+  // - see if scanned code is any of them if not raise error
+
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState("");
   const [permission, requestPermission] = useCameraPermissions();
+  const [loading, setLoading] = useSate(false);
 
   if (!permission) {
     // Camera permissions are still loading
