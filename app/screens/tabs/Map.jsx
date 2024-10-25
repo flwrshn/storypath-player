@@ -1,5 +1,6 @@
-import { View, Text } from "react-native";
+// app/screens/tabs/Map.jsx
 import React from "react";
+import { View, Text } from "react-native";
 
 const Map = () => {
   return (
