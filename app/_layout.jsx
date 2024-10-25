@@ -19,10 +19,16 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // Project-specific Tab Navigator
-function ProjectTabNavigator() {
+function ProjectTabNavigator({ route }) {
+  const { project } = route.params;
+
   return (
     <Tab.Navigator initialRouteName="ProjectHome">
-      <Tab.Screen name="Project Home" component={ProjectHome} />
+      <Tab.Screen
+        name="Project Home"
+        component={ProjectHome}
+        initialParams={{ project }}
+      />
       <Tab.Screen name="Map" component={Map} />
       <Tab.Screen name="QR Scanner" component={QRScanner} />
     </Tab.Navigator>
