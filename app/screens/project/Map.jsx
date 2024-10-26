@@ -1,5 +1,5 @@
 // app/screens/tabs/Map.jsx;
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Text, View, StyleSheet } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { LocationContext } from "@/components/context/LocationContext";
@@ -7,7 +7,9 @@ import { LocationContext } from "@/components/context/LocationContext";
 const Map = ({ route }) => {
   const { project } = route.params;
   const { locations } = useContext(LocationContext);
-  // Locations has attributes
+
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationPermission, setLocationPermission] = useState(null);
 
   const initialRegion = {
     latitude: -27.4975, // UQ St Lucia Campus coordinates

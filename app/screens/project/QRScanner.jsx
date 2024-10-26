@@ -76,17 +76,26 @@ const QRScanner = ({ route }) => {
       return;
     }
 
-    if (project.participant_scoring === "Number of Scanned QR Codes") {
+    // Track only if scoring is by QR code and username exists
+    if (
+      project.participant_scoring === "Number of Scanned QR Codes" &&
+      user &&
+      user.trim() !== ""
+    ) {
       const trackingData = {
         project_id: project.id,
-        location_id: parseInt(scannedLocationId, 10),
+        location_id: scannedLocation.id,
         participant_username: user,
         points: scannedLocation.score_points,
       };
 
       try {
         await createTracking(trackingData);
-        console.log("Tracking recorded.");
+        Alert.alert(
+          "Success",
+          `Tracking recorded! You earned ${scannedLocation.score_points} points.`,
+          [{ text: "OK" }]
+        );
         setScannedData(data);
       } catch (error) {
         console.error("Failed to create tracking:", error);
