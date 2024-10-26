@@ -1,8 +1,8 @@
-// app / screens / tabs / Map.jsx;
+// app/screens/tabs/Map.jsx;
 import React, { useContext } from "react";
 import { Text, View, StyleSheet } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import { LocationContext } from "../../../components/context/LocationContext";
+import { LocationContext } from "@/components/context/LocationContext";
 
 const Map = ({ route }) => {
   const { project } = route.params;

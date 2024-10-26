@@ -1,11 +1,14 @@
+// app/screens/project/QRScanner.jsx
 import { View, Text, StyleSheet, Button, Alert } from "react-native";
-import React, { useEffect, useState, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { LocationContext } from "../../../components/context/LocationContext";
+import { LocationContext } from "@/components/context/LocationContext";
+import { UserContext } from "@/components/context/UserContext";
 
 const QRScanner = ({ route }) => {
   const { project } = route.params;
   const { locations } = useContext(LocationContext);
+  const { user } = useContext(UserContext);
 
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState("");

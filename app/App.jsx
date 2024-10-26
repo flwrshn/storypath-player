@@ -1,3 +1,4 @@
+// app/App.jsx
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import AppLayout from "./_layout";

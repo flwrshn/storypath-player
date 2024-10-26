@@ -1,14 +1,12 @@
 // app/screens/tabs/ProjectHome.jsx
 import { View, Text } from "react-native";
-import React, { useState, useEffect, useContext } from "react";
-import { useRoute } from "@react-navigation/native";
+import React, { useEffect, useContext } from "react";
 import { ScrollView } from "react-native-gesture-handler";
-import { getLocations } from "../../../services/api";
-import { LocationContext } from "../../../components/context/LocationContext";
+import { getLocations } from "@/services/api";
+import { LocationContext } from "@/components/context/LocationContext";
 
 const ProjectHome = ({ route }) => {
   const { project } = route.params;
-  // const [locations, setLocations] = useState([]);
   const { locations, setLocations } = useContext(LocationContext);
 
   useEffect(() => {

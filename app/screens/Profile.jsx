@@ -1,3 +1,4 @@
+// app/screens/Profile.jsx
 import React, { useState, useEffect, useContext } from "react";
 import {
   SafeAreaView,
