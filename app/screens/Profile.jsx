@@ -20,32 +20,28 @@ import { UserContext } from "../../components/context/UserContext"; // Adjust th
 const { height } = Dimensions.get("window");
 
 const Profile = () => {
-  const { user, setUser } = useContext(UserContext); // Use UserContext for username
+  const { user, setUser, loading } = useContext(UserContext); // Use UserContext for username
   const [photo, setPhoto] = useState(null);
 
   // Load saved username and photo from AsyncStorage on mount
-  useEffect(() => {
-    const loadProfileData = async () => {
+  useState(() => {
+    const loadProfilePhoto = async () => {
       try {
-        const savedUsername = await AsyncStorage.getItem(
-          "participant_username"
-        );
         const savedPhoto = await AsyncStorage.getItem("participant_photo");
-
-        if (savedUsername) setUser(savedUsername); // Set the context state
         if (savedPhoto) setPhoto(savedPhoto);
       } catch (error) {
-        console.error("Failed to load profile data:", error);
+        console.error("Failed to load photo:", error);
       }
     };
 
-    loadProfileData();
-  }, [setUser]);
+    loadProfilePhoto();
+  }, []);
 
   // Save username and photo to AsyncStorage
   const saveProfileData = async (newUsername, newPhoto) => {
     try {
       if (newUsername !== null) {
+        setUser(newUsername); // Update the context state
         await AsyncStorage.setItem("participant_username", newUsername);
       }
       if (newPhoto !== null) {
@@ -95,6 +91,16 @@ const Profile = () => {
     setPhoto(null);
     await saveProfileData(null, "");
   };
+
+  // Loading state if context is still loading
+  if (loading) {
+    return (
+      <View>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Loading user data...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>

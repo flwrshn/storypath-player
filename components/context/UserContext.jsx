@@ -8,6 +8,7 @@ export const UserContext = createContext();
 // Create the provider component
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Load the user data from AsyncStorage when the app starts
@@ -19,6 +20,8 @@ export const UserProvider = ({ children }) => {
         if (savedUsername) setUser(savedUsername);
       } catch (error) {
         console.error("Failed to load user data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -26,7 +29,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, loading }}>
       {children}
     </UserContext.Provider>
   );

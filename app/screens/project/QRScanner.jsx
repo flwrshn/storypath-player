@@ -8,8 +8,7 @@ import { UserContext } from "@/components/context/UserContext";
 const QRScanner = ({ route }) => {
   const { project } = route.params;
   const { locations } = useContext(LocationContext);
-  const { user } = useContext(UserContext);
-  console.log(user);
+  const { user, userLoading } = useContext(UserContext);
 
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState("");
@@ -33,6 +32,15 @@ const QRScanner = ({ route }) => {
           We need your permission to show the camera
         </Text>
         <Button onPress={requestPermission} title="Grant permission" />
+      </View>
+    );
+  }
+
+  if (userLoading) {
+    return (
+      <View>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Loading user data...</Text>
       </View>
     );
   }
