@@ -13,6 +13,14 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
+    "app/_layout.jsx",
+    "navigation/DrawerNavigator.jsx",
+    "services/api.js",
+    "components/Header.jsx",
+    "app/App.jsx",
+    "app/_layout.jsx",
+    "app/(tabs)/About.jsx",
+    "app/(tabs)/Home.jsx",
     "nativewind-env.d.ts"
   ]
 }

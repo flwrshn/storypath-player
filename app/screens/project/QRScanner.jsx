@@ -1,18 +1,16 @@
-import { View, Text, StyleSheet, Button } from "react-native";
-import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, Button, Alert } from "react-native";
+import React, { useEffect, useState, useContext } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { getLocation } from "@/services/api"; // Import API functions
+import { LocationContext } from "../../../components/context/LocationContext";
 
 const QRScanner = ({ route }) => {
   const { project } = route.params;
-
-  // TODO:
-  // - see if scanned code is any of them if not raise error
+  const { locations } = useContext(LocationContext);
 
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState("");
   const [permission, requestPermission] = useCameraPermissions();
-  const [loading, setLoading] = useSate(false);
+  const [loading, setLoading] = useState(false);
 
   if (!permission) {
     // Camera permissions are still loading
@@ -38,7 +36,37 @@ const QRScanner = ({ route }) => {
   const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true);
 
-    setScannedData(data);
+    // Checking if it's a QR code
+    if (type !== "org.iso.QRCode") {
+      Alert.alert("Error", "Please scan a QR code!", [
+        { text: "OK", onPress: () => setScanned(false) },
+      ]);
+      return;
+    }
+
+    // Check if scanned data matches the project ID
+    // QR code data is stored as project_id, location_id i.e. 1,3 so we split the data
+    const [scannedProjectId, scannedLocationId] = data.split(",");
+
+    if (scannedProjectId === project.id) {
+      Alert.alert("Error", "Scanned code does not match the current project!", [
+        { text: "OK", onPress: () => setScanned(false) },
+      ]);
+    }
+
+    const locationExists = locations.some(
+      (location) => location.id.toString() === scannedLocationId
+    );
+
+    if (!locationExists) {
+      Alert.alert("Error", "Scanned location is not valid for this project!", [
+        { text: "OK", onPress: () => setScanned(false) },
+      ]);
+    } else {
+      // Success if project and location IDs are correct
+      Alert.alert("Success", "Scanned code is valid!", [{ text: "OK" }]);
+      setScannedData(data);
+    }
   };
 
   return (

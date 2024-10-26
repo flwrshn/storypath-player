@@ -1,10 +1,14 @@
 // app / screens / tabs / Map.jsx;
-import React from "react";
+import React, { useContext } from "react";
 import { Text, View, StyleSheet } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import { LocationContext } from "../../../components/context/LocationContext";
 
 const Map = ({ route }) => {
   const { project } = route.params;
+  const { locations } = useContext(LocationContext);
+  // Locations has attributes
+
   const initialRegion = {
     latitude: -27.4975, // UQ St Lucia Campus coordinates
     longitude: 153.0137,

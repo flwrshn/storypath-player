@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   SafeAreaView,
   View,
@@ -13,13 +13,14 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserContext } from "../../components/context/UserContext"; // Adjust the path as needed
 
 // Get screen dimensions for styling
 const { height } = Dimensions.get("window");
 
 const Profile = () => {
+  const { user, setUser } = useContext(UserContext); // Use UserContext for username
   const [photo, setPhoto] = useState(null);
-  const [username, setUsername] = useState("");
 
   // Load saved username and photo from AsyncStorage on mount
   useEffect(() => {
@@ -30,7 +31,7 @@ const Profile = () => {
         );
         const savedPhoto = await AsyncStorage.getItem("participant_photo");
 
-        if (savedUsername) setUsername(savedUsername);
+        if (savedUsername) setUser(savedUsername); // Set the context state
         if (savedPhoto) setPhoto(savedPhoto);
       } catch (error) {
         console.error("Failed to load profile data:", error);
@@ -38,7 +39,7 @@ const Profile = () => {
     };
 
     loadProfileData();
-  }, []);
+  }, [setUser]);
 
   // Save username and photo to AsyncStorage
   const saveProfileData = async (newUsername, newPhoto) => {
@@ -72,14 +73,14 @@ const Profile = () => {
 
   // Handle username change
   const handleUsernameChange = (text) => {
-    setUsername(text);
+    setUser(text); // Update context state
   };
 
   // Save profile data when user presses 'Save'
   const handleSavePress = async () => {
     try {
-      // Save the username and photo to AsyncStorage
-      await saveProfileData(username, null);
+      // Save the username to AsyncStorage
+      await saveProfileData(user, null);
 
       Alert.alert("Success", "Profile updated!");
     } catch (error) {
@@ -110,7 +111,7 @@ const Profile = () => {
       <TextInput
         style={styles.input}
         placeholder="Enter Username"
-        value={username}
+        value={user}
         onChangeText={handleUsernameChange}
       />
       <Button title="Save" onPress={handleSavePress} />

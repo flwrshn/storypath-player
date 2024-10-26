@@ -7,7 +7,7 @@ import "../global.css";
 const App = () => {
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer fallback={<Text>Loading...</Text>}>
         <AppLayout />
       </NavigationContainer>
     </SafeAreaProvider>
