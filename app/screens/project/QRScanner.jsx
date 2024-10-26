@@ -9,6 +9,7 @@ const QRScanner = ({ route }) => {
   const { project } = route.params;
   const { locations } = useContext(LocationContext);
   const { user } = useContext(UserContext);
+  console.log(user);
 
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState("");
