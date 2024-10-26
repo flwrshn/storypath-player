@@ -4,16 +4,16 @@ import React, { useState, useContext } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { LocationContext } from "@/components/context/LocationContext";
 import { UserContext } from "@/components/context/UserContext";
+import { createTracking } from "@/services/api";
 
 const QRScanner = ({ route }) => {
   const { project } = route.params;
   const { locations } = useContext(LocationContext);
-  const { user, userLoading } = useContext(UserContext);
+  const { user, loading } = useContext(UserContext);
 
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState("");
   const [permission, requestPermission] = useCameraPermissions();
-  const [loading, setLoading] = useState(false);
 
   if (!permission) {
     // Camera permissions are still loading
@@ -36,7 +36,7 @@ const QRScanner = ({ route }) => {
     );
   }
 
-  if (userLoading) {
+  if (loading) {
     return (
       <View>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -45,7 +45,7 @@ const QRScanner = ({ route }) => {
     );
   }
 
-  const handleBarCodeScanned = ({ type, data }) => {
+  const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
 
     // Checking if it's a QR code
@@ -56,7 +56,6 @@ const QRScanner = ({ route }) => {
       return;
     }
 
-    // Check if scanned data matches the project ID
     // QR code data is stored as project_id, location_id i.e. 1,3 so we split the data
     const [scannedProjectId, scannedLocationId] = data.split(",");
 
@@ -66,17 +65,36 @@ const QRScanner = ({ route }) => {
       ]);
     }
 
-    const locationExists = locations.some(
+    const scannedLocation = locations.find(
       (location) => location.id.toString() === scannedLocationId
     );
 
-    if (!locationExists) {
+    if (!scannedLocation) {
       Alert.alert("Error", "Scanned location is not valid for this project!", [
         { text: "OK", onPress: () => setScanned(false) },
       ]);
+      return;
+    }
+
+    if (project.participant_scoring === "Number of Scanned QR Codes") {
+      const trackingData = {
+        project_id: project.id,
+        location_id: parseInt(scannedLocationId, 10),
+        participant_username: user,
+        points: scannedLocation.score_points,
+      };
+
+      try {
+        await createTracking(trackingData);
+        console.log("Tracking recorded.");
+        setScannedData(data);
+      } catch (error) {
+        console.error("Failed to create tracking:", error);
+        setScanned(false);
+      }
     } else {
       // Success if project and location IDs are correct
-      Alert.alert("Success", "Scanned code is valid!", [{ text: "OK" }]);
+      Alert.alert("Success", "Scanned QR code is valid!", [{ text: "OK" }]);
       setScannedData(data);
     }
   };
