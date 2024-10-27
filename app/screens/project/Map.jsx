@@ -5,15 +5,20 @@ import {
   StyleSheet,
   ActivityIndicator,
   SafeAreaView,
+  Alert,
 } from "react-native";
 import MapView, { Circle, Marker } from "react-native-maps";
 import { LocationContext } from "@/components/context/LocationContext";
+import { UserContext } from "@/components/context/UserContext";
 import * as Location from "expo-location";
 import { getDistance } from "geolib";
+import { createTracking } from "@/services/api";
 
 const Map = ({ route }) => {
   const { project } = route.params;
   const { locations } = useContext(LocationContext);
+  const { user } = useContext(UserContext);
+
   const [userLocation, setUserLocation] = useState(null);
   const [locationPermission, setLocationPermission] = useState(false);
   const [visitedLocations, setVisitedLocations] = useState(new Set());
@@ -29,12 +34,37 @@ const Map = ({ route }) => {
 
   // Check if the user's location matches any of the location coordinates
   const checkUserAtLocation = (userLoc) => {
-    locations.forEach((location) => {
+    locations.forEach(async (location) => {
       const locationCoords = parseLocationPosition(location.location_position);
       const distance = getDistance(userLoc, locationCoords);
-      if (distance <= 50) {
-        // Mark the location as visited if within 50 meters
+      const isWithinRadius = distance <= 100; // Considered as "entered" if within 100 meters
+
+      // If within radius, mark as visited and create tracking if scoring is based on locations entered
+      if (isWithinRadius && !visitedLocations.has(location.id)) {
         setVisitedLocations((prev) => new Set(prev).add(location.id));
+
+        if (
+          project.participant_scoring === "Number of Locations Entered" &&
+          user &&
+          user.trim() !== ""
+        ) {
+          const trackingData = {
+            project_id: project.id,
+            location_id: location.id,
+            participant_username: user,
+            points: location.score_points,
+          };
+
+          try {
+            await createTracking(trackingData);
+            Alert.alert(
+              "Success",
+              `Location entered! You earned ${location.score_points} points at ${location.location_name}.`
+            );
+          } catch (error) {
+            console.error("Failed to create tracking:", error);
+          }
+        }
       }
     });
   };
@@ -88,7 +118,9 @@ const Map = ({ route }) => {
           <Marker
             coordinate={userLocation}
             title="Current location"
+            description="Your current location"
             pinColor="blue"
+            rotation={90} // Adjust for the desired arrow rotation
             flat={true}
           />
 
