@@ -1,7 +1,5 @@
 // services/api.js
 
-// services/api.js
-
 const API_BASE_URL = "https://0b5ff8b0.uqcloud.net/api/";
 const JWT_TOKEN =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic3R1ZGVudCIsInVzZXJuYW1lIjoiczQ3NDE5MTEifQ.5Gg6bIS85s_MX_jKfE89a2_YJx19ZFQ_SP7t67Z4Bu0";
@@ -61,9 +59,14 @@ export const getPublishedProjects = async () => {
   const projectsWithParticipants = await Promise.all(
     projects.map(async (project) => {
       const participants = await getTrackingsByProjectId(project.id);
+      // Extract unique participant usernames
+      const uniqueUsernames = [
+        ...new Set(participants.map((p) => p.participant_username)),
+      ];
       return {
         ...project,
-        participantCount: participants.length,
+        participantCount: uniqueUsernames.length, // Count of unique participants
+        participants: uniqueUsernames, // List of unique participant usernames
       };
     })
   );
