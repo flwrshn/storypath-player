@@ -34,22 +34,56 @@ const ProjectHome = ({ route }) => {
       <Text>Instructions: {project.instructions}</Text>
       <Text>Initial Clue: {project.initial_clue}</Text>
       <Text>Homescreen Display: {project.homescreen_display}</Text>
-      {project.homescreen_display === "Display all locations" && (
-        <View>
-          <Text className="text-2xl mb-2">Project Locations:</Text>
+      {/* Conditional display based on homescreen_display */}
+      {project.homescreen_display === "Display initial clue" ? (
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: "600" }}>Initial Clue:</Text>
+          <Text style={{ fontSize: 14, marginTop: 4 }}>
+            {project.initial_clue}
+          </Text>
+        </View>
+      ) : project.homescreen_display === "Display all locations" ? (
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: "600" }}>
+            Project Locations:
+          </Text>
           {locations.length > 0 ? (
             locations.map((location) => (
-              <View key={location.id} className="mb-2 border">
-                <Text>Name: {location.location_name}</Text>
-                <Text>Trigger: {location.location_trigger}</Text>
-                <Text>Position: {location.location_position}</Text>
-                <Text>Clue: {location.clue}</Text>
+              <View
+                key={location.id}
+                style={{
+                  marginTop: 8,
+                  padding: 8,
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  borderRadius: 8,
+                  backgroundColor: "white",
+                }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: "600" }}>
+                  Name: {location.location_name}
+                </Text>
+                <Text style={{ fontSize: 14 }}>
+                  Trigger: {location.location_trigger}
+                </Text>
+                <Text style={{ fontSize: 14 }}>
+                  Position: {location.location_position}
+                </Text>
+
+                {/* Display location clue if not blank */}
+                {location.clue && (
+                  <Text style={{ fontSize: 14, marginTop: 4 }}>
+                    Clue: {location.clue}
+                  </Text>
+                )}
               </View>
             ))
           ) : (
             <Text>No locations found for this project.</Text>
           )}
         </View>
+      ) : (
+        <Text style={{ fontSize: 14 }}>Invalid display option.</Text>
       )}
     </ScrollView>
   );
