@@ -1,234 +1,200 @@
-import { View, Text } from "react-native";
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
+import {
+  Text,
+  View,
+  StyleSheet,
+  ActivityIndicator,
+  SafeAreaView,
+  Alert,
+} from "react-native";
+import MapView, { Circle, Marker } from "react-native-maps";
+import { LocationContext } from "@/components/context/LocationContext";
+import { UserContext } from "@/components/context/UserContext";
+import * as Location from "expo-location";
+import { getDistance } from "geolib";
+import { createTracking } from "@/services/api";
 
-const Map = () => {
+const Map = ({ route }) => {
+  const { project } = route.params;
+  const { locations } = useContext(LocationContext);
+  const { user } = useContext(UserContext);
+
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationPermission, setLocationPermission] = useState(false);
+  const [visitedLocations, setVisitedLocations] = useState(new Set());
+
+  // Helper function to parse location_position
+  const parseLocationPosition = (locationPosition) => {
+    const [latitude, longitude] = locationPosition
+      .replace(/[()]/g, "")
+      .split(",")
+      .map((coord) => parseFloat(coord));
+    return { latitude, longitude };
+  };
+
+  // Check if the user's location matches any of the location coordinates
+  const checkUserAtLocation = (userLoc) => {
+    locations.forEach(async (location) => {
+      const locationCoords = parseLocationPosition(location.location_position);
+      const distance = getDistance(userLoc, locationCoords);
+      const isWithinRadius = distance <= 100; // Considered as "entered" if within 100 meters
+
+      // If within radius, mark as visited and create tracking if scoring is based on locations entered
+      if (isWithinRadius && !visitedLocations.has(location.id)) {
+        setVisitedLocations((prev) => new Set(prev).add(location.id));
+
+        if (
+          project.participant_scoring === "Number of Locations Entered" &&
+          user &&
+          user.trim() !== ""
+        ) {
+          const trackingData = {
+            project_id: project.id,
+            location_id: location.id,
+            participant_username: user,
+            points: location.score_points,
+          };
+
+          try {
+            await createTracking(trackingData);
+            Alert.alert(
+              "Success",
+              `Location entered! You earned ${location.score_points} points at ${location.location_name}.`
+            );
+          } catch (error) {
+            console.error("Failed to create tracking:", error);
+          }
+        }
+      }
+    });
+  };
+
+  // Request location permission and get user's location
+  useEffect(() => {
+    async function requestLocationPermission() {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        setLocationPermission(true);
+        await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            distanceInterval: 10, // Update every 10 meters
+          },
+          (location) => {
+            const userCoordinates = {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            };
+            setUserLocation(userCoordinates);
+            checkUserAtLocation(userCoordinates);
+          }
+        );
+      }
+    }
+    requestLocationPermission();
+  }, []);
+
+  const initialRegion = {
+    latitude: userLocation ? userLocation.latitude : -27.4975, // Default to UQ St Lucia
+    longitude: userLocation ? userLocation.longitude : 153.0137,
+    latitudeDelta: 0.05, // Wider view
+    longitudeDelta: 0.05,
+  };
+
   return (
-    <View>
-      <Text>Map</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Project: {project.title}</Text>
+      {userLocation ? (
+        <MapView
+          style={styles.map}
+          initialRegion={initialRegion}
+          showsUserLocation={locationPermission}
+          userLocationUpdateInterval={5000}
+          userLocationPriority="high"
+          showsMyLocationButton={true}
+          followsUserLocation={true}
+        >
+          {/* Arrow marker for user location */}
+          <Marker
+            coordinate={userLocation}
+            title="Current location"
+            description="Your current location"
+            pinColor="blue"
+            rotation={90} // Adjust for the desired arrow rotation
+            flat={true}
+          />
+
+          {/* Display all locations */}
+          {locations.map((location) => {
+            const coordinates = parseLocationPosition(
+              location.location_position
+            );
+            const isVisited = visitedLocations.has(location.id);
+            return (
+              <View key={location.id}>
+                <Circle
+                  center={coordinates}
+                  radius={100}
+                  strokeWidth={2}
+                  strokeColor={isVisited ? "green" : "red"} // Green for visited, red for unvisited
+                  fillColor={
+                    isVisited ? "rgba(0,255,0,0.3)" : "rgba(255,0,0,0.3)"
+                  }
+                />
+                <Marker
+                  coordinate={coordinates}
+                  title={location.location_name}
+                  description={`Points: ${location.score_points} ${
+                    isVisited ? "(Visited)" : ""
+                  }`}
+                  pinColor={isVisited ? "green" : "red"} // Green for visited, red for unvisited
+                />
+              </View>
+            );
+          })}
+        </MapView>
+      ) : (
+        <ActivityIndicator size="large" color="#0000ff" />
+      )}
+
+      {/* Display message if no locations have been visited */}
+      {visitedLocations.size === 0 && (
+        <SafeAreaView style={styles.noLocationView}>
+          <Text style={styles.noLocationText}>
+            No locations visited yet. Explore to start unlocking!
+          </Text>
+        </SafeAreaView>
+      )}
     </View>
   );
 };
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    width: "100%",
+    height: "100%",
+  },
+  title: {
+    padding: 10,
+    fontSize: 18,
+  },
+  noLocationView: {
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  noLocationText: {
+    fontSize: 16,
+    backgroundColor: "black",
+    color: "white",
+    padding: 10,
+    borderRadius: 5,
+  },
+});
+
 export default Map;
-
-// import React, { useState, useEffect, useContext } from "react";
-// import {
-//   StyleSheet,
-//   Appearance,
-//   View,
-//   SafeAreaView,
-//   Text,
-//   Alert,
-// } from "react-native";
-// import MapView, { Circle, Marker } from "react-native-maps";
-// import * as Location from "expo-location";
-// import { getDistance } from "geolib";
-
-// import { LocationContext } from "@/components/context/LocationContext";
-// import { UserContext } from "@/components/context/UserContext";
-// import { createTracking } from "@/services/api"; // Import your API handler
-
-// // Define Stylesheet
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//   },
-//   nearbyLocationSafeAreaView: {
-//     backgroundColor: "black",
-//   },
-//   nearbyLocationView: {
-//     padding: 20,
-//   },
-//   nearbyLocationText: {
-//     color: "white",
-//     lineHeight: 25,
-//   },
-// });
-
-// // Get light or dark mode
-// const colorScheme = Appearance.getColorScheme();
-
-// function NearbyLocation(props) {
-//   if (typeof props.location !== "undefined") {
-//     return (
-//       <SafeAreaView style={styles.nearbyLocationSafeAreaView}>
-//         <View style={styles.nearbyLocationView}>
-//           <Text style={styles.nearbyLocationText}>
-//             {props.location.location_name}
-//           </Text>
-//           {props.distance.nearby && (
-//             <Text style={{ ...styles.nearbyLocationText, fontWeight: "bold" }}>
-//               Within 100 Metres!
-//             </Text>
-//           )}
-//         </View>
-//       </SafeAreaView>
-//     );
-//   }
-// }
-
-// export default function Map({ route }) {
-//   const { project } = route.params; // Retrieve project from route params
-//   const { locations } = useContext(LocationContext); // Use locations from LocationContext
-//   const { user } = useContext(UserContext); // Use user from UserContext
-
-//   const updatedLocations = locations.map((location) => {
-//     const [latitude, longitude] = location.location_position
-//       .replace(/[()]/g, "")
-//       .split(", ");
-//     location.coordinates = {
-//       latitude: parseFloat(latitude),
-//       longitude: parseFloat(longitude),
-//     };
-//     return location;
-//   });
-
-//   const initialMapState = {
-//     locationPermission: false,
-//     locations: updatedLocations,
-//     userLocation: {
-//       latitude: -27.4975,
-//       longitude: 153.0137, // Default to UQ St Lucia
-//     },
-//     nearbyLocation: {},
-//     visitedLocations: new Set(), // Track visited locations
-//   };
-
-//   const [mapState, setMapState] = useState(initialMapState);
-
-//   useEffect(() => {
-//     async function requestLocationPermission() {
-//       const { status } = await Location.requestForegroundPermissionsAsync();
-//       if (status === "granted") {
-//         setMapState((prevState) => ({
-//           ...prevState,
-//           locationPermission: true,
-//         }));
-//       }
-//     }
-//     requestLocationPermission();
-//   }, []);
-
-//   useEffect(() => {
-//     function calculateDistance(userLocation) {
-//       const nearestLocations = mapState.locations
-//         .map((location) => {
-//           const metres = getDistance(userLocation, location.coordinates);
-//           location["distance"] = {
-//             metres: metres,
-//             nearby: metres <= 100,
-//           };
-//           return location;
-//         })
-//         .sort(
-//           (prevLoc, currLoc) =>
-//             prevLoc.distance.metres - currLoc.distance.metres
-//         );
-
-//       return nearestLocations.shift();
-//     }
-
-//     let locationSubscription = null;
-
-//     if (mapState.locationPermission) {
-//       (async () => {
-//         locationSubscription = await Location.watchPositionAsync(
-//           {
-//             accuracy: Location.Accuracy.High,
-//             distanceInterval: 10, // Update every 10 meters
-//           },
-//           async (location) => {
-//             const userLocation = {
-//               latitude: location.coords.latitude,
-//               longitude: location.coords.longitude,
-//             };
-
-//             const nearbyLocation = calculateDistance(userLocation);
-
-//             // Check if within 100 meters and not visited
-//             if (
-//               nearbyLocation.distance.nearby &&
-//               !mapState.visitedLocations.has(nearbyLocation.id)
-//             ) {
-//               // Mark as visited
-//               setMapState((prevState) => ({
-//                 ...prevState,
-//                 visitedLocations: new Set(prevState.visitedLocations).add(
-//                   nearbyLocation.id
-//                 ),
-//               }));
-
-//               // Create tracking if scoring is based on location entry
-//               if (
-//                 project.participant_scoring === "Number of Locations Entered" &&
-//                 user &&
-//                 user.trim() !== ""
-//               ) {
-//                 const trackingData = {
-//                   project_id: project.id,
-//                   location_id: nearbyLocation.id,
-//                   participant_username: user,
-//                   points: nearbyLocation.score_points,
-//                 };
-
-//                 try {
-//                   await createTracking(trackingData);
-//                   Alert.alert(
-//                     "Success",
-//                     `Location entered! You earned ${nearbyLocation.score_points} points at ${nearbyLocation.location_name}.`
-//                   );
-//                 } catch (error) {
-//                   console.error("Failed to create tracking:", error);
-//                 }
-//               }
-//             }
-
-//             setMapState((prevState) => ({
-//               ...prevState,
-//               userLocation,
-//               nearbyLocation,
-//             }));
-//           }
-//         );
-//       })();
-//     }
-
-//     return () => {
-//       if (locationSubscription) {
-//         locationSubscription.remove();
-//       }
-//     };
-//   }, [mapState.locationPermission]);
-
-//   return (
-//     <>
-//       <MapView
-//         camera={{
-//           center: mapState.userLocation,
-//           pitch: 0,
-//           heading: 0,
-//           altitude: 3000,
-//           zoom: 15,
-//         }}
-//         showsUserLocation={mapState.locationPermission}
-//         style={styles.container}
-//       >
-//         {mapState.locations.map((location) => (
-//           <Circle
-//             key={location.id}
-//             center={location.coordinates}
-//             radius={100}
-//             strokeWidth={3}
-//             strokeColor="#A42DE8"
-//             fillColor={
-//               colorScheme === "dark"
-//                 ? "rgba(128,0,128,0.5)"
-//                 : "rgba(210,169,210,0.5)"
-//             }
-//           />
-//         ))}
-//       </MapView>
-//       <NearbyLocation {...mapState.nearbyLocation} />
-//     </>
-//   );
-// }

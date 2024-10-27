@@ -32,8 +32,6 @@ const ProjectHome = ({ route }) => {
       <Text>Description: {project.description}</Text>
       <Text>Scoring: {project.participant_scoring}</Text>
       <Text>Instructions: {project.instructions}</Text>
-      <Text>Initial Clue: {project.initial_clue}</Text>
-      <Text>Homescreen Display: {project.homescreen_display}</Text>
       {/* Conditional display based on homescreen_display */}
       {project.homescreen_display === "Display initial clue" ? (
         <View style={{ marginBottom: 16 }}>
