@@ -1,6 +1,7 @@
 // app/screens/Home.jsx
 import { View, Text } from "react-native";
-import React from "react";
+import React, { useContext } from "react";
+import { UserContext } from "@/components/context/UserContext";
 
 const Home = ({}) => {
   return (
