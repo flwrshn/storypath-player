@@ -1,4 +1,3 @@
-// app/screens/project/Map.jsx
 import React, { useContext, useEffect, useState } from "react";
 import {
   Text,
@@ -15,26 +14,9 @@ import { getDistance } from "geolib";
 const Map = ({ route }) => {
   const { project } = route.params;
   const { locations } = useContext(LocationContext);
-
   const [userLocation, setUserLocation] = useState(null);
   const [locationPermission, setLocationPermission] = useState(false);
-  const [nearbyLocation, setNearbyLocation] = useState(null);
-
-  // Request location permission and get user's location
-  useEffect(() => {
-    async function requestLocationPermission() {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted") {
-        setLocationPermission(true);
-        const userLoc = await Location.getCurrentPositionAsync({});
-        setUserLocation({
-          latitude: userLoc.coords.latitude,
-          longitude: userLoc.coords.longitude,
-        });
-      }
-    }
-    requestLocationPermission();
-  }, []);
+  const [visitedLocations, setVisitedLocations] = useState(new Set());
 
   // Helper function to parse location_position
   const parseLocationPosition = (locationPosition) => {
@@ -45,30 +27,48 @@ const Map = ({ route }) => {
     return { latitude, longitude };
   };
 
-  // Calculate nearest location
-  useEffect(() => {
-    if (userLocation && locations.length > 0) {
-      const nearestLocation = locations
-        .map((location) => {
-          const coordinates = parseLocationPosition(location.location_position);
-          const distance = getDistance(userLocation, coordinates);
-          return { ...location, coordinates, distance };
-        })
-        .sort((a, b) => a.distance - b.distance)[0]; // Get the nearest location
+  // Check if the user's location matches any of the location coordinates
+  const checkUserAtLocation = (userLoc) => {
+    locations.forEach((location) => {
+      const locationCoords = parseLocationPosition(location.location_position);
+      const distance = getDistance(userLoc, locationCoords);
+      if (distance <= 50) {
+        // Mark the location as visited if within 50 meters
+        setVisitedLocations((prev) => new Set(prev).add(location.id));
+      }
+    });
+  };
 
-      if (nearestLocation.distance <= 100) {
-        setNearbyLocation(nearestLocation);
-      } else {
-        setNearbyLocation(null);
+  // Request location permission and get user's location
+  useEffect(() => {
+    async function requestLocationPermission() {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        setLocationPermission(true);
+        await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            distanceInterval: 10, // Update every 10 meters
+          },
+          (location) => {
+            const userCoordinates = {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            };
+            setUserLocation(userCoordinates);
+            checkUserAtLocation(userCoordinates);
+          }
+        );
       }
     }
-  }, [userLocation, locations]);
+    requestLocationPermission();
+  }, []);
 
   const initialRegion = {
-    latitude: userLocation ? userLocation.latitude : -27.4975,
+    latitude: userLocation ? userLocation.latitude : -27.4975, // Default to UQ St Lucia
     longitude: userLocation ? userLocation.longitude : 153.0137,
-    latitudeDelta: 0.01, // Adjusted for campus level view
-    longitudeDelta: 0.01,
+    latitudeDelta: 0.05, // Wider view
+    longitudeDelta: 0.05,
   };
 
   return (
@@ -79,28 +79,43 @@ const Map = ({ route }) => {
           style={styles.map}
           initialRegion={initialRegion}
           showsUserLocation={locationPermission}
+          userLocationUpdateInterval={5000}
+          userLocationPriority="high"
+          showsMyLocationButton={true}
+          followsUserLocation={true}
         >
-          {/* Marker for user's current location */}
-          <Marker coordinate={userLocation} title="Current location" />
+          {/* Arrow marker for user location */}
+          <Marker
+            coordinate={userLocation}
+            title="Current location"
+            pinColor="blue"
+            flat={true}
+          />
 
-          {/* Map through locations and display circles and markers */}
+          {/* Display all locations */}
           {locations.map((location) => {
             const coordinates = parseLocationPosition(
               location.location_position
             );
+            const isVisited = visitedLocations.has(location.id);
             return (
               <View key={location.id}>
                 <Circle
                   center={coordinates}
                   radius={100}
                   strokeWidth={2}
-                  strokeColor="#FF0000"
-                  fillColor="rgba(255,0,0,0.3)"
+                  strokeColor={isVisited ? "green" : "red"} // Green for visited, red for unvisited
+                  fillColor={
+                    isVisited ? "rgba(0,255,0,0.3)" : "rgba(255,0,0,0.3)"
+                  }
                 />
                 <Marker
                   coordinate={coordinates}
                   title={location.location_name}
-                  description={`Points: ${location.score_points}`}
+                  description={`Points: ${location.score_points} ${
+                    isVisited ? "(Visited)" : ""
+                  }`}
+                  pinColor={isVisited ? "green" : "red"} // Green for visited, red for unvisited
                 />
               </View>
             );
@@ -110,11 +125,11 @@ const Map = ({ route }) => {
         <ActivityIndicator size="large" color="#0000ff" />
       )}
 
-      {/* Display nearby location info if within 100 meters */}
-      {nearbyLocation && (
-        <SafeAreaView style={styles.nearbyLocationView}>
-          <Text style={styles.nearbyLocationText}>
-            {nearbyLocation.location_name} is within 100 meters!
+      {/* Display message if no locations have been visited */}
+      {visitedLocations.size === 0 && (
+        <SafeAreaView style={styles.noLocationView}>
+          <Text style={styles.noLocationText}>
+            No locations visited yet. Explore to start unlocking!
           </Text>
         </SafeAreaView>
       )}
@@ -134,14 +149,14 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 18,
   },
-  nearbyLocationView: {
+  noLocationView: {
     position: "absolute",
     bottom: 20,
     left: 0,
     right: 0,
     alignItems: "center",
   },
-  nearbyLocationText: {
+  noLocationText: {
     fontSize: 16,
     backgroundColor: "black",
     color: "white",
