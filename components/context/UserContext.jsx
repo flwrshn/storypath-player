@@ -9,6 +9,12 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState("");
   const [userLocation, setUserLocation] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [visitedLocations, setVisitedLocations] = useState(new Set());
+
+  // Function to add a location to the visited locations set
+  const addVisitedLocation = (locationId) => {
+    setVisitedLocations((prev) => new Set(prev).add(locationId));
+  };
 
   useEffect(() => {
     // Load the user data from AsyncStorage when the app starts
@@ -52,7 +58,16 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser, loading, userLocation }}>
+    <UserContext.Provider
+      value={{
+        user,
+        setUser,
+        loading,
+        userLocation,
+        visitedLocations,
+        addVisitedLocation,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );
