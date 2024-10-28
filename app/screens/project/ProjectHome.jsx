@@ -1,33 +1,26 @@
 import React, { useContext, useEffect, useState } from "react";
-import {
-  Text,
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  SafeAreaView,
-  Alert,
-} from "react-native";
+import { Text, View, Alert } from "react-native";
 import MapView, { Circle, Marker } from "react-native-maps";
 import { LocationContext } from "@/components/context/LocationContext";
 import { UserContext } from "@/components/context/UserContext";
 import { getDistance } from "geolib";
 import { createTracking } from "@/services/api";
 
-const Map = ({ route }) => {
+// Helper function to parse location_position
+const parseLocationPosition = (locationPosition) => {
+  const [latitude, longitude] = locationPosition
+    .replace(/[()]/g, "")
+    .split(",")
+    .map((coord) => parseFloat(coord));
+  return { latitude, longitude };
+};
+
+const ProjectHome = ({ route }) => {
   const { project } = route.params;
   const { locations } = useContext(LocationContext);
   const { user, userLocation } = useContext(UserContext);
 
   const [visitedLocations, setVisitedLocations] = useState(new Set());
-
-  // Helper function to parse location_position
-  const parseLocationPosition = (locationPosition) => {
-    const [latitude, longitude] = locationPosition
-      .replace(/[()]/g, "")
-      .split(",")
-      .map((coord) => parseFloat(coord));
-    return { latitude, longitude };
-  };
 
   // Check if the user's location matches any of the location coordinates
   const checkUserAtLocation = (userLoc) => {
@@ -84,96 +77,10 @@ const Map = ({ route }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Project: {project.title}</Text>
-      {userLocation ? (
-        <MapView
-          style={styles.map}
-          initialRegion={initialRegion}
-          showsUserLocation={true}
-          followsUserLocation={true}
-        >
-          {/* Arrow marker for user location */}
-          <Marker
-            coordinate={userLocation}
-            title="Current location"
-            description="Your current location"
-            pinColor="blue"
-            rotation={90}
-            flat={true}
-          />
-
-          {/* Display all locations */}
-          {locations.map((location) => {
-            const coordinates = parseLocationPosition(
-              location.location_position
-            );
-            const isVisited = visitedLocations.has(location.id);
-            return (
-              <View key={location.id}>
-                <Circle
-                  center={coordinates}
-                  radius={100}
-                  strokeWidth={2}
-                  strokeColor={isVisited ? "green" : "red"}
-                  fillColor={
-                    isVisited ? "rgba(0,255,0,0.3)" : "rgba(255,0,0,0.3)"
-                  }
-                />
-                <Marker
-                  coordinate={coordinates}
-                  title={location.location_name}
-                  description={`Points: ${location.score_points} ${
-                    isVisited ? "(Visited)" : ""
-                  }`}
-                  pinColor={isVisited ? "green" : "red"}
-                />
-              </View>
-            );
-          })}
-        </MapView>
-      ) : (
-        <ActivityIndicator size="large" color="#0000ff" />
-      )}
-
-      {/* Display message if no locations have been visited */}
-      {visitedLocations.size === 0 && (
-        <SafeAreaView style={styles.noLocationView}>
-          <Text style={styles.noLocationText}>
-            No locations visited yet. Explore to start unlocking!
-          </Text>
-        </SafeAreaView>
-      )}
+    <View>
+      <Text>Project: {project.title}</Text>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    width: "100%",
-    height: "100%",
-  },
-  title: {
-    padding: 10,
-    fontSize: 18,
-  },
-  noLocationView: {
-    position: "absolute",
-    bottom: 20,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  noLocationText: {
-    fontSize: 16,
-    backgroundColor: "black",
-    color: "white",
-    padding: 10,
-    borderRadius: 5,
-  },
-});
-
-export default Map;
+export default ProjectHome;
