@@ -8,7 +8,8 @@ import LocationCard from "@/components/LocationCard";
 const ProjectHome = ({ route }) => {
   const { project } = route.params;
   const { locations, setLocations } = useContext(LocationContext);
-  const { user, userLocation } = useContext(UserContext);
+  const { user, userLocation, visitedLocations, addVisitedLocation } =
+    useContext(UserContext);
 
   const fetchLocations = useCallback(
     // Memoize fetchLocations until setLocations changes
