@@ -1,64 +1,4 @@
-// import { View, Text, ScrollView } from "react-native";
-// import React, { useContext, useEffect, useCallback } from "react";
-// import { UserContext } from "@/components/context/UserContext";
-// import { LocationContext } from "@/components/context/LocationContext";
-// import { getLocations } from "@/services/api";
-// import LocationCard from "@/components/LocationCard";
-
-// const ProjectHome = ({ route }) => {
-//   const { project } = route.params;
-//   const { locations, setLocations } = useContext(LocationContext);
-//   const { user, userLocation, visitedLocations, addVisitedLocation } =
-//     useContext(UserContext);
-
-//   const fetchLocations = useCallback(
-//     // Memoize fetchLocations until setLocations changes
-//     async (projectId) => {
-//       try {
-//         const fetchedLocations = await getLocations(projectId);
-//         setLocations(fetchedLocations);
-//       } catch (error) {
-//         console.error("Failed to fetch locations:", error);
-//       }
-//     },
-//     [setLocations]
-//   );
-
-//   useEffect(() => {
-//     if (project.homescreen_display === "Display all locations") {
-//       fetchLocations(project.id);
-//     }
-//   }, [project, fetchLocations]);
-
-//   return (
-//     <View>
-//       <Text>Project: {project.title}</Text>
-//       <Text>Instructions: {project.instructions}</Text>
-//       {/* Conditional display based on homescreen_display */}
-//       {project.homescreen_display === "Display initial clue" ? (
-//         <View>
-//           <Text> The initial clue is: {project.initial_clue}</Text>
-//         </View>
-//       ) : (
-//         <View>
-//           <Text>Project Locations:</Text>
-//           {locations.length > 0 ? (
-//             locations.map((location) => (
-//               <View key={location.id}>
-//                 <LocationCard key={location.id} location={location} />
-//               </View>
-//             ))
-//           ) : (
-//             <Text>No locations found for this project.</Text>
-//           )}
-//         </View>
-//       )}
-//     </View>
-//   );
-// };
-
-// export default ProjectHome;
-
+// app/screens/ProjectHome.jsx
 import { View, Text, Alert, TouchableOpacity } from "react-native";
 import React, { useContext, useEffect, useCallback } from "react";
 import { UserContext } from "@/components/context/UserContext";
@@ -73,8 +13,7 @@ const ProjectHome = ({ route }) => {
   const navigation = useNavigation();
   const { project } = route.params;
   const { locations, setLocations } = useContext(LocationContext);
-  const { userLocation, visitedLocations, addVisitedLocation } =
-    useContext(UserContext);
+  const { userLocation } = useContext(UserContext);
 
   // Fetch locations based on project
   const fetchLocations = useCallback(
@@ -97,7 +36,7 @@ const ProjectHome = ({ route }) => {
       );
       const distance = getDistance(userLocation, locationCoordinates);
 
-      if (distance <= 50 && !visitedLocations.has(location.id)) {
+      if (distance <= 50) {
         handleLocationProximity(location);
       }
     });
@@ -105,8 +44,6 @@ const ProjectHome = ({ route }) => {
 
   // Handle logic when user is within proximity of a location
   const handleLocationProximity = (location) => {
-    addVisitedLocation(location.id);
-
     Alert.alert(
       "Success!",
       `You are within 50 meters of ${location.location_name}.`,
@@ -121,6 +58,8 @@ const ProjectHome = ({ route }) => {
 
   // Effect to fetch locations
   useEffect(() => {
+    // FIXME: need to load locations regardless
+    // Thinking to load locations when clicking on project so maybe in _layout?
     if (project.homescreen_display === "Display all locations") {
       fetchLocations(project.id);
     }
@@ -163,12 +102,12 @@ const ProjectHome = ({ route }) => {
         className="bg-[#0CC000] items-center"
         onPress={() =>
           navigation.navigate("VisitedLocations", {
-            visitedLocations: visitedLocationsList,
+            locations,
           })
         }
       >
         <Text>
-          Locations visited {visitedLocations.size}/{locations.length}
+          Locations visited {locations.length}/{locations.length}
         </Text>
       </TouchableOpacity>
     </View>

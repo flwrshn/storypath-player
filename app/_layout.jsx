@@ -61,7 +61,7 @@ function ProjectStackNavigator() {
 export default function AppLayout() {
   return (
     <UserProvider>
-      <Drawer.Navigator initialRouteName="Home">
+      <Drawer.Navigator initialRouteName="screens/Home">
         <Drawer.Screen name="screens/Home" component={Home} />
         <Drawer.Screen name="screens/Profile" component={Profile} />
         <Drawer.Screen

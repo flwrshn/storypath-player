@@ -6,6 +6,9 @@ import { LocationContext } from "@/components/context/LocationContext";
 import { UserContext } from "@/components/context/UserContext";
 import { createTracking } from "@/services/api";
 
+// TODO: when a location is scanned need to have an Alert and then that leads
+// them to location detail
+
 const QRScanner = ({ route }) => {
   const { project } = route.params;
   const { locations } = useContext(LocationContext);

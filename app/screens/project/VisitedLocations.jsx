@@ -2,15 +2,15 @@ import React from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
 
 const VisitedLocations = ({ route }) => {
-  const { visitedLocations } = route.params;
+  const { locations } = route.params;
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Visited Locations</Text>
-      {visitedLocations.length > 0 ? (
+      {locations.length > 0 ? (
         <FlatList
-          data={visitedLocations}
-          keyExtractor={(item) => item.id.toString()}
+          data={locations}
+          keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.locationCard}>
               <Text style={styles.locationName}>{item.location_name}</Text>
