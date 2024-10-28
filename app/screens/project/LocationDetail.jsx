@@ -9,7 +9,6 @@ const LocationDetail = ({ route }) => {
       <Text style={styles.title}>{location.location_name}</Text>
       <Text style={styles.info}>Points: {location.score_points}</Text>
       <Text style={styles.info}>{location.description}</Text>
-      {/* Add more location details as needed */}
     </View>
   );
 };
