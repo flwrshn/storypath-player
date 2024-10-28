@@ -1,98 +1,24 @@
-import React, { useContext, useEffect, useState } from "react";
-import {
-  Text,
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  SafeAreaView,
-  Alert,
-} from "react-native";
-import MapView, { Circle, Marker } from "react-native-maps";
-import { LocationContext } from "@/components/context/LocationContext";
-import { UserContext } from "@/components/context/UserContext";
-import * as Location from "expo-location";
+import { View, Text, StyleSheet } from "react-native";
+import React, { useContext } from "react";
 import { getDistance } from "geolib";
-import { createTracking } from "@/services/api";
+import MapView, { Circle, Marker } from "react-native-maps";
+import { parseLocationPosition } from "@/utils/parseLocation";
+import { UserContext } from "@/components/context/UserContext";
+import { LocationContext } from "@/components/context/LocationContext";
 
-const Map = ({ route }) => {
-  const { project } = route.params;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    width: "100%",
+    height: "100%",
+  },
+});
+
+const Map = () => {
+  const { userLocation } = useContext(UserContext);
   const { locations } = useContext(LocationContext);
-  const { user } = useContext(UserContext);
-
-  const [userLocation, setUserLocation] = useState(null);
-  const [locationPermission, setLocationPermission] = useState(false);
-  const [visitedLocations, setVisitedLocations] = useState(new Set());
-
-  // Helper function to parse location_position
-  const parseLocationPosition = (locationPosition) => {
-    const [latitude, longitude] = locationPosition
-      .replace(/[()]/g, "")
-      .split(",")
-      .map((coord) => parseFloat(coord));
-    return { latitude, longitude };
-  };
-
-  // Check if the user's location matches any of the location coordinates
-  const checkUserAtLocation = (userLoc) => {
-    locations.forEach(async (location) => {
-      const locationCoords = parseLocationPosition(location.location_position);
-      const distance = getDistance(userLoc, locationCoords);
-      const isWithinRadius = distance <= 100; // Considered as "entered" if within 100 meters
-
-      // If within radius, mark as visited and create tracking if scoring is based on locations entered
-      if (isWithinRadius && !visitedLocations.has(location.id)) {
-        setVisitedLocations((prev) => new Set(prev).add(location.id));
-
-        if (
-          project.participant_scoring === "Number of Locations Entered" &&
-          user &&
-          user.trim() !== ""
-        ) {
-          const trackingData = {
-            project_id: project.id,
-            location_id: location.id,
-            participant_username: user,
-            points: location.score_points,
-          };
-
-          try {
-            await createTracking(trackingData);
-            Alert.alert(
-              "Success",
-              `Location entered! You earned ${location.score_points} points at ${location.location_name}.`
-            );
-          } catch (error) {
-            console.error("Failed to create tracking:", error);
-          }
-        }
-      }
-    });
-  };
-
-  // Request location permission and get user's location
-  useEffect(() => {
-    async function requestLocationPermission() {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted") {
-        setLocationPermission(true);
-        await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            distanceInterval: 10, // Update every 10 meters
-          },
-          (location) => {
-            const userCoordinates = {
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            };
-            setUserLocation(userCoordinates);
-            checkUserAtLocation(userCoordinates);
-          }
-        );
-      }
-    }
-    requestLocationPermission();
-  }, []);
 
   const initialRegion = {
     latitude: userLocation ? userLocation.latitude : -27.4975, // Default to UQ St Lucia
@@ -103,98 +29,42 @@ const Map = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Project: {project.title}</Text>
-      {userLocation ? (
-        <MapView
-          style={styles.map}
-          initialRegion={initialRegion}
-          showsUserLocation={locationPermission}
-          userLocationUpdateInterval={5000}
-          userLocationPriority="high"
-          showsMyLocationButton={true}
-          followsUserLocation={true}
-        >
-          {/* Arrow marker for user location */}
-          <Marker
-            coordinate={userLocation}
-            title="Current location"
-            description="Your current location"
-            pinColor="blue"
-            rotation={90} // Adjust for the desired arrow rotation
-            flat={true}
-          />
-
-          {/* Display all locations */}
-          {locations.map((location) => {
+      <MapView
+        style={styles.map}
+        initialRegion={initialRegion}
+        showsUserLocation={true}
+      >
+        {locations.map((location) => {
+          if (location.location_position) {
             const coordinates = parseLocationPosition(
               location.location_position
             );
-            const isVisited = visitedLocations.has(location.id);
+
             return (
               <View key={location.id}>
+                {/* Circle around the location */}
                 <Circle
                   center={coordinates}
                   radius={100}
                   strokeWidth={2}
-                  strokeColor={isVisited ? "green" : "red"} // Green for visited, red for unvisited
-                  fillColor={
-                    isVisited ? "rgba(0,255,0,0.3)" : "rgba(255,0,0,0.3)"
-                  }
+                  strokeColor="red"
+                  fillColor="rgba(255,0,0,0.3)"
                 />
+                {/* Marker for the location */}
                 <Marker
                   coordinate={coordinates}
                   title={location.location_name}
-                  description={`Points: ${location.score_points} ${
-                    isVisited ? "(Visited)" : ""
-                  }`}
-                  pinColor={isVisited ? "green" : "red"} // Green for visited, red for unvisited
+                  description={`Points: ${location.score_points}`}
+                  pinColor="red"
                 />
               </View>
             );
-          })}
-        </MapView>
-      ) : (
-        <ActivityIndicator size="large" color="#0000ff" />
-      )}
-
-      {/* Display message if no locations have been visited */}
-      {visitedLocations.size === 0 && (
-        <SafeAreaView style={styles.noLocationView}>
-          <Text style={styles.noLocationText}>
-            No locations visited yet. Explore to start unlocking!
-          </Text>
-        </SafeAreaView>
-      )}
+          }
+          return null;
+        })}
+      </MapView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    width: "100%",
-    height: "100%",
-  },
-  title: {
-    padding: 10,
-    fontSize: 18,
-  },
-  noLocationView: {
-    position: "absolute",
-    bottom: 20,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  noLocationText: {
-    fontSize: 16,
-    backgroundColor: "black",
-    color: "white",
-    padding: 10,
-    borderRadius: 5,
-  },
-});
 
 export default Map;
