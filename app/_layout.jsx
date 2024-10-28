@@ -13,6 +13,7 @@ import ProjectHome from "./screens/project/ProjectHome";
 import Map from "./screens/project/Map";
 import QRScanner from "./screens/project/QRScanner";
 import LocationDetail from "./screens/project/LocationDetail";
+import VisitedLocations from "./screens/project/VisitedLocations";
 import { LocationProvider } from "../components/context/LocationContext";
 import { UserProvider } from "../components/context/UserContext";
 
@@ -51,6 +52,7 @@ function ProjectStackNavigator() {
       <Stack.Screen name="Project List" component={ProjectList} />
       <Stack.Screen name="Project Details" component={ProjectTabNavigator} />
       <Stack.Screen name="LocationDetail" component={LocationDetail} />
+      <Stack.Screen name="VisitedLocations" component={VisitedLocations} />
     </Stack.Navigator>
   );
 }

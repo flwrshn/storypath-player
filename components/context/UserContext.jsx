@@ -9,7 +9,8 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState("");
   const [userLocation, setUserLocation] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [visitedLocations, setVisitedLocations] = useState(new Set());
+  // const [visitedLocations, setVisitedLocations] = useState(new Set());
+  const [visitedLocations, setVisitedLocations] = useState({}); // Object to store visited locations by project ID
 
   // Function to add a location to the visited locations set
   const addVisitedLocation = (locationId) => {
