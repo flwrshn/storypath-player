@@ -82,6 +82,7 @@ const ProjectHome = ({ route }) => {
           {locations.length}
         </Text>
       </TouchableOpacity>
+      {/* FIXME: Need to have project specific score */}
       <View>
         <Text>User Score: {score}</Text>
       </View>
