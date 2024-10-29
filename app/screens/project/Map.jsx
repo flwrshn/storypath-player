@@ -4,7 +4,6 @@ import { getDistance } from "geolib";
 import MapView, { Circle, Marker } from "react-native-maps";
 import { parseLocationPosition } from "@/utils/parseLocation";
 import { UserContext } from "@/components/context/UserContext";
-import { LocationContext } from "@/components/context/LocationContext";
 
 const styles = StyleSheet.create({
   container: {
@@ -16,9 +15,9 @@ const styles = StyleSheet.create({
   },
 });
 
-const Map = () => {
+const Map = ({ route }) => {
   const { userLocation } = useContext(UserContext);
-  const { locations } = useContext(LocationContext);
+  const { locations } = route.params;
 
   const initialRegion = {
     latitude: userLocation ? userLocation.latitude : -27.4975, // Default to UQ St Lucia

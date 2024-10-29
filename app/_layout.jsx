@@ -1,5 +1,6 @@
 // app/_layout.tsx
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { View, ActivityIndicator } from "react-native";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";

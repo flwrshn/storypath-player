@@ -2,7 +2,6 @@
 import { View, Text, StyleSheet, Button, Alert } from "react-native";
 import React, { useState, useContext } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { LocationContext } from "@/components/context/LocationContext";
 import { UserContext } from "@/components/context/UserContext";
 import { createTracking } from "@/services/api";
 
@@ -10,8 +9,7 @@ import { createTracking } from "@/services/api";
 // them to location detail
 
 const QRScanner = ({ route }) => {
-  const { project } = route.params;
-  const { locations } = useContext(LocationContext);
+  const { project, locations } = route.params;
   const { user, loading } = useContext(UserContext);
 
   const [scanned, setScanned] = useState(false);

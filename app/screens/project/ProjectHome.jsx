@@ -1,6 +1,6 @@
 // app/screens/ProjectHome.jsx
 import { View, Text, Alert, TouchableOpacity } from "react-native";
-import React, { useContext, useEffect, useCallback } from "react";
+import React, { useContext, useEffect } from "react";
 import { UserContext } from "@/components/context/UserContext";
 import { getDistance } from "geolib";
 import LocationCard from "@/components/LocationCard";
