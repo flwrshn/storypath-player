@@ -6,6 +6,7 @@ import { getDistance } from "geolib";
 import LocationCard from "@/components/LocationCard";
 import { parseLocationPosition } from "@/utils/parseLocation";
 import { useNavigation } from "expo-router";
+import { handleLocationProximity } from "@/utils/proximityHandler";
 
 const ProjectHome = ({ route }) => {
   const navigation = useNavigation();
@@ -21,28 +22,28 @@ const ProjectHome = ({ route }) => {
       const distance = getDistance(userLocation, locationCoordinates);
 
       if (distance <= 50) {
-        handleLocationProximity(location);
+        handleLocationProximity(location, navigation.navigate);
       }
     });
   };
 
   // Handle logic when user is within proximity of a location
-  const handleLocationProximity = (location) => {
-    Alert.alert(
-      "Success!",
-      `You are within 50 meters of ${location.location_name}.`,
-      [
-        {
-          text: "Dismiss", // Option to do nothing and close the alert
-          style: "cancel",
-        },
-        {
-          text: "Learn More",
-          onPress: () => navigation.navigate("Location Detail", { location }),
-        },
-      ]
-    );
-  };
+  // const handleLocationProximity = (location) => {
+  //   Alert.alert(
+  //     "Success!",
+  //     `You are within 50 meters of ${location.location_name}.`,
+  //     [
+  //       {
+  //         text: "Dismiss", // Option to do nothing and close the alert
+  //         style: "cancel",
+  //       },
+  //       {
+  //         text: "Learn More",
+  //         onPress: () => navigation.navigate("Location Detail", { location }),
+  //       },
+  //     ]
+  //   );
+  // };
 
   // Navigate to VisitedLocations and pass all locations
   const handleVisitedLocationsPress = () => {
