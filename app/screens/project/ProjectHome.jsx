@@ -14,8 +14,6 @@ const ProjectHome = ({ route }) => {
   const { userLocation, visitedLocations, addTracking, score } =
     useContext(UserContext);
 
-  console.log(visitedLocations);
-
   // Check if user is within 50 meters of any location
   const checkProximityToLocations = () => {
     locations.forEach((location) => {
