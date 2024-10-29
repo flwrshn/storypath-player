@@ -11,7 +11,10 @@ import { handleLocationProximity } from "@/utils/proximityHandler";
 const ProjectHome = ({ route }) => {
   const navigation = useNavigation();
   const { project, locations } = route.params;
-  const { userLocation } = useContext(UserContext);
+  const { userLocation, visitedLocations, addTracking, score } =
+    useContext(UserContext);
+
+  console.log(visitedLocations);
 
   // Check if user is within 50 meters of any location
   const checkProximityToLocations = () => {
@@ -20,8 +23,12 @@ const ProjectHome = ({ route }) => {
         location.location_position
       );
       const distance = getDistance(userLocation, locationCoordinates);
-
-      if (distance <= 50) {
+      // If user is within 50m of the location and it's not already visited
+      if (
+        distance <= 50 &&
+        !visitedLocations[project.id]?.locations.has(location.id)
+      ) {
+        addTracking(project.id, location.id, location.score_points);
         handleLocationProximity(location, navigation.navigate);
       }
     });
@@ -33,6 +40,7 @@ const ProjectHome = ({ route }) => {
   };
 
   // Effect to check proximity
+  // FIXME: Need for locations?
   useEffect(() => {
     if (userLocation && locations.length > 0) {
       checkProximityToLocations();
@@ -70,9 +78,13 @@ const ProjectHome = ({ route }) => {
         onPress={handleVisitedLocationsPress}
       >
         <Text>
-          Locations visited {locations.length}/{locations.length}
+          Locations visited {visitedLocations[project.id]?.locations.size || 0}/
+          {locations.length}
         </Text>
       </TouchableOpacity>
+      <View>
+        <Text>User Score: {score}</Text>
+      </View>
     </View>
   );
 };
