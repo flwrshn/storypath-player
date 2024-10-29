@@ -3,6 +3,8 @@ import React from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { getLocations } from "@/services/api";
+import { UserProvider } from "@/components/context/UserContext";
 
 // Import screens
 import Home from "./screens/Home";
@@ -14,8 +16,6 @@ import Map from "./screens/project/Map";
 import QRScanner from "./screens/project/QRScanner";
 import LocationDetail from "./screens/project/LocationDetail";
 import VisitedLocations from "./screens/project/VisitedLocations";
-import { LocationProvider } from "../components/context/LocationContext";
-import { UserProvider } from "../components/context/UserContext";
 
 // Create the navigators
 const Drawer = createDrawerNavigator();
@@ -25,23 +25,52 @@ const Tab = createBottomTabNavigator();
 // Project-specific Tab Navigator
 function ProjectTabNavigator({ route }) {
   const { project } = route.params;
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch locations when tapping on project
+  useEffect(() => {
+    const fetchProjectLocations = async () => {
+      try {
+        const fetchedLocations = await getLocations(project.id);
+        setLocations(fetchedLocations);
+      } catch (error) {
+        console.error("Failed to fetch locations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjectLocations();
+  }, [project.id]);
+
+  // Show loading indicator while fetching locations
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
-    <LocationProvider>
-      <Tab.Navigator initialRouteName="ProjectHome">
-        <Tab.Screen
-          name="Project Home"
-          component={ProjectHome}
-          initialParams={{ project }}
-        />
-        <Tab.Screen name="Map" component={Map} initialParams={{ project }} />
-        <Tab.Screen
-          name="QR Scanner"
-          component={QRScanner}
-          initialParams={{ project }}
-        />
-      </Tab.Navigator>
-    </LocationProvider>
+    <Tab.Navigator initialRouteName="ProjectHome">
+      <Tab.Screen
+        name="Project Home"
+        component={ProjectHome}
+        initialParams={{ project, locations }}
+      />
+      <Tab.Screen
+        name="Map"
+        component={Map}
+        initialParams={{ project, locations }}
+      />
+      <Tab.Screen
+        name="QR Scanner"
+        component={QRScanner}
+        initialParams={{ project, locations }}
+      />
+    </Tab.Navigator>
   );
 }
 

@@ -2,8 +2,6 @@
 import { View, Text, Alert, TouchableOpacity } from "react-native";
 import React, { useContext, useEffect, useCallback } from "react";
 import { UserContext } from "@/components/context/UserContext";
-import { LocationContext } from "@/components/context/LocationContext";
-import { getLocations } from "@/services/api";
 import { getDistance } from "geolib";
 import LocationCard from "@/components/LocationCard";
 import { parseLocationPosition } from "@/utils/parseLocation";
@@ -11,22 +9,8 @@ import { useNavigation } from "expo-router";
 
 const ProjectHome = ({ route }) => {
   const navigation = useNavigation();
-  const { project } = route.params;
-  const { locations, setLocations } = useContext(LocationContext);
+  const { project, locations } = route.params;
   const { userLocation } = useContext(UserContext);
-
-  // Fetch locations based on project
-  const fetchLocations = useCallback(
-    async (projectId) => {
-      try {
-        const fetchedLocations = await getLocations(projectId);
-        setLocations(fetchedLocations);
-      } catch (error) {
-        console.error("Failed to fetch locations:", error);
-      }
-    },
-    [setLocations]
-  );
 
   // Check if user is within 50 meters of any location
   const checkProximityToLocations = () => {
@@ -55,15 +39,6 @@ const ProjectHome = ({ route }) => {
       ]
     );
   };
-
-  // Effect to fetch locations
-  useEffect(() => {
-    // FIXME: need to load locations regardless
-    // Thinking to load locations when clicking on project so maybe in _layout?
-    if (project.homescreen_display === "Display all locations") {
-      fetchLocations(project.id);
-    }
-  }, [project, fetchLocations]);
 
   // Effect to check proximity
   useEffect(() => {
