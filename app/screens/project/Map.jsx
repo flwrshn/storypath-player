@@ -1,6 +1,5 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import React, { useContext } from "react";
-import { getDistance } from "geolib";
 import MapView, { Circle, Marker } from "react-native-maps";
 import { parseLocationPosition } from "@/utils/parseLocation";
 import { UserContext } from "@/components/context/UserContext";
@@ -16,8 +15,8 @@ const styles = StyleSheet.create({
 });
 
 const Map = ({ route }) => {
-  const { userLocation } = useContext(UserContext);
-  const { locations } = route.params;
+  const { userLocation, visitedLocations } = useContext(UserContext);
+  const { project, locations } = route.params;
 
   const initialRegion = {
     latitude: userLocation ? userLocation.latitude : -27.4975, // Default to UQ St Lucia
@@ -26,6 +25,10 @@ const Map = ({ route }) => {
     longitudeDelta: 0.05,
   };
 
+  const visitedLocationsList = locations.filter((location) =>
+    visitedLocations[project.id]?.locations.has(location.id)
+  );
+
   return (
     <View style={styles.container}>
       <MapView
@@ -33,34 +36,42 @@ const Map = ({ route }) => {
         initialRegion={initialRegion}
         showsUserLocation={true}
       >
-        {locations.map((location) => {
-          if (location.location_position) {
-            const coordinates = parseLocationPosition(
-              location.location_position
-            );
+        {visitedLocationsList.length > 0
+          ? // Map over visited locations
+            visitedLocationsList.map((location) => {
+              if (location.location_position) {
+                const coordinates = parseLocationPosition(
+                  location.location_position
+                );
 
-            return (
-              <View key={location.id}>
-                {/* Circle around the location */}
-                <Circle
-                  center={coordinates}
-                  radius={100}
-                  strokeWidth={2}
-                  strokeColor="red"
-                  fillColor="rgba(255,0,0,0.3)"
-                />
-                {/* Marker for the location */}
-                <Marker
-                  coordinate={coordinates}
-                  title={location.location_name}
-                  description={`Points: ${location.score_points}`}
-                  pinColor="red"
-                />
-              </View>
-            );
-          }
-          return null;
-        })}
+                return (
+                  <View key={location.id}>
+                    <Circle
+                      center={coordinates}
+                      radius={50}
+                      strokeWidth={2}
+                      strokeColor="purple"
+                      fillColor="rgba(140, 20, 252,0.3)"
+                    />
+                    <Marker
+                      coordinate={coordinates}
+                      title={location.location_name}
+                      description={`Points: ${location.score_points}`}
+                      pinColor="red"
+                    />
+                  </View>
+                );
+              }
+              return null;
+            })
+          : // Show only the user's location if no locations are visited
+            userLocation && (
+              <Marker
+                coordinate={userLocation}
+                title="Your Location"
+                pinColor="blue"
+              />
+            )}
       </MapView>
     </View>
   );

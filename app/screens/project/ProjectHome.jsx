@@ -14,6 +14,10 @@ const ProjectHome = ({ route }) => {
   const { userLocation, visitedLocations, addTracking, score } =
     useContext(UserContext);
 
+  const visitedLocationsList = locations.filter((location) =>
+    visitedLocations[project.id]?.locations.has(location.id)
+  );
+
   // Check if user is within 50 meters of any location
   const checkProximityToLocations = () => {
     locations.forEach((location) => {
@@ -34,7 +38,9 @@ const ProjectHome = ({ route }) => {
 
   // Navigate to VisitedLocations and pass all locations
   const handleVisitedLocationsPress = () => {
-    navigation.navigate("Visited Locations", { locations });
+    navigation.navigate("Visited Locations", {
+      locations: visitedLocationsList,
+    });
   };
 
   // Effect to check proximity
