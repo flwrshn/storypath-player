@@ -17,7 +17,10 @@ export const UserProvider = ({ children }) => {
   const loadUserData = async () => {
     try {
       const savedUsername = await AsyncStorage.getItem("participant_username");
-      if (savedUsername) setUser(savedUsername);
+      if (savedUsername) {
+        setUser(savedUsername);
+        await fetchTrackings(savedUsername);
+      }
     } catch (error) {
       console.error("Failed to load user data:", error);
     } finally {
@@ -98,11 +101,17 @@ export const UserProvider = ({ children }) => {
     const initializeUserContext = async () => {
       setLoading(true);
       await loadUserData();
-      await startWatchingLocation();
       setLoading(false);
     };
     initializeUserContext();
   }, []);
+
+  // Watch for changes in the user state to restart location tracking
+  useEffect(() => {
+    if (user) {
+      startWatchingLocation(); // Restart location tracking when user changes
+    }
+  }, [user]);
 
   return (
     <UserContext.Provider
@@ -114,6 +123,7 @@ export const UserProvider = ({ children }) => {
         visitedLocations,
         addTracking,
         score,
+        fetchTrackings,
       }}
     >
       {children}
