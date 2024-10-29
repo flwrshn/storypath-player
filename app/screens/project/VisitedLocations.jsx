@@ -1,5 +1,12 @@
+import { useNavigation } from "@react-navigation/native";
 import React from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 
 const VisitedLocations = ({ route }) => {
   const { locations } = route.params;

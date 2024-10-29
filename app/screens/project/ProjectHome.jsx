@@ -34,10 +34,15 @@ const ProjectHome = ({ route }) => {
       [
         {
           text: "OK",
-          onPress: () => navigation.navigate("LocationDetail", { location }),
+          onPress: () => navigation.navigate("Location Detail", { location }),
         },
       ]
     );
+  };
+
+  // Navigate to VisitedLocations and pass all locations
+  const handleVisitedLocationsPress = () => {
+    navigation.navigate("Visited Locations", { locations });
   };
 
   // Effect to check proximity
@@ -75,11 +80,7 @@ const ProjectHome = ({ route }) => {
 
       <TouchableOpacity
         className="bg-[#0CC000] items-center"
-        onPress={() =>
-          navigation.navigate("VisitedLocations", {
-            locations,
-          })
-        }
+        onPress={handleVisitedLocationsPress}
       >
         <Text>
           Locations visited {locations.length}/{locations.length}

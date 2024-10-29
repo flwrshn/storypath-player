@@ -81,8 +81,8 @@ function ProjectStackNavigator() {
     <Stack.Navigator initialRouteName="ProjectList">
       <Stack.Screen name="Project List" component={ProjectList} />
       <Stack.Screen name="Project Details" component={ProjectTabNavigator} />
-      <Stack.Screen name="LocationDetail" component={LocationDetail} />
-      <Stack.Screen name="VisitedLocations" component={VisitedLocations} />
+      <Stack.Screen name="Visited Locations" component={VisitedLocations} />
+      <Stack.Screen name="Location Detail" component={LocationDetail} />
     </Stack.Navigator>
   );
 }
