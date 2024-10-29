@@ -10,6 +10,12 @@ import {
 
 const VisitedLocations = ({ route }) => {
   const { locations } = route.params;
+  const navigation = useNavigation();
+
+  // Handle navigation to location detail
+  const handleLocationPress = (location) => {
+    navigation.navigate("Location Detail", { location });
+  };
 
   return (
     <View style={styles.container}>
@@ -19,12 +25,15 @@ const VisitedLocations = ({ route }) => {
           data={locations}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.locationCard}>
+            <TouchableOpacity
+              style={styles.locationCard}
+              onPress={() => handleLocationPress(item)}
+            >
               <Text style={styles.locationName}>{item.location_name}</Text>
               <Text style={styles.locationInfo}>
                 Points: {item.score_points}
               </Text>
-            </View>
+            </TouchableOpacity>
           )}
         />
       ) : (

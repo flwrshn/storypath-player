@@ -33,7 +33,11 @@ const ProjectHome = ({ route }) => {
       `You are within 50 meters of ${location.location_name}.`,
       [
         {
-          text: "OK",
+          text: "Dismiss", // Option to do nothing and close the alert
+          style: "cancel",
+        },
+        {
+          text: "Learn More",
           onPress: () => navigation.navigate("Location Detail", { location }),
         },
       ]
