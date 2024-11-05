@@ -5,66 +5,75 @@ import { UserContext } from "@/components/context/UserContext";
 import { getDistance } from "geolib";
 import LocationCard from "@/components/LocationCard";
 import { parseLocationPosition } from "@/utils/parseLocation";
-import { handleLocationProximity } from "@/utils/proximityHandler";
-import { getTrackings } from "@/services/api";
-
-// Track user location
-// If the user location is within the bounds of a location and not in visited locations
-// Make a tracking
-// Update the user's visited locations
+import { getTrackings, createTracking } from "@/services/api";
 
 const ProjectHome = ({ navigation, route }) => {
   const { project, locations } = route.params;
-  const {
-    user,
-    userLocation,
-    visitedLocations,
-    projectScore,
-    addTracking,
-    setProjectTrackings,
-  } = useContext(UserContext);
-
-  // Set the visited locations and score for the current project
-  useEffect(() => {
-    setProjectTrackings(project.id);
-  }, [project.id]);
-
-  // Get the current project's visited locations and score
-  const projectData = visitedLocations[project.id] || {
-    locations: [],
-    score: 0,
-  };
+  const { user, userLocation, getTrackingsByProject } = useContext(UserContext);
+  // Get visited locations for the current project
+  const { visitedTrackings, score } = getTrackingsByProject(project.id);
 
   // Check if user is within 50 meters of any location
-  const checkProximityToLocations = () => {
-    locations.forEach((location) => {
-      const locationCoordinates = parseLocationPosition(
-        location.location_position
-      );
-      const distance = getDistance(userLocation, locationCoordinates);
+  const checkProximityToLocations = async () => {
+    try {
+      await Promise.all(
+        locations.map(async (location) => {
+          const locationCoordinates = parseLocationPosition(
+            location.location_position
+          );
+          const distance = getDistance(userLocation, locationCoordinates);
 
-      // Track if user is within 50m of the location and it's not already visited
-      if (
-        distance <= 50 &&
-        project.participant_scoring === "Number of Locations Entered" &&
-        !projectData.locations.includes(location.id)
-      ) {
-        addTracking(project.id, location.id, location.score_points);
-        handleLocationProximity(location, navigation.navigate);
-      }
-    });
+          // Track If user is within 50m of the location and
+          // the scoring is based on location and
+          // if it is not visited
+          if (
+            distance <= 50 &&
+            project.participant_scoring === "Number of Locations Entered" &&
+            !visitedTrackings.some(
+              (tracking) => tracking.location_id === location.id
+            )
+          ) {
+            const trackingData = {
+              project_id: project.id,
+              location_id: location.id,
+              participant_username: user,
+              points: location.score_points,
+            };
+
+            await createTracking(trackingData);
+            console.log("Tracking recorded.");
+
+            const trackings = await getTrackings(user);
+            console.log("Trackings:", trackings);
+
+            handleLocationProximity(location, navigation.navigate);
+          }
+        })
+      );
+    } catch (error) {
+      console.error("Error in processing locations:", error);
+    }
   };
 
-  // Navigate to VisitedLocations and pass all locations
+  const handleLocationProximity = (location, navigate) => {
+    Alert.alert("Success!", `You are within ${location.location_name}.`, [
+      {
+        text: "Dismiss", // Option to do nothing and close the alert
+        style: "cancel",
+      },
+      {
+        text: "Learn More",
+        onPress: () => navigate("Location Detail", { location }),
+      },
+    ]);
+  };
+
+  // Navigate to VisitedLocations and pass only the visited locations for this project
   const handleVisitedLocationsPress = () => {
-    const visitedLocationsFull = visitedLocations
-      .map((locationId) =>
-        locations.find((location) => location.id === locationId)
-      )
-      .filter((location) => location !== undefined);
-    navigation.navigate("Visited Locations", {
-      locations: visitedLocationsFull,
-    });
+    const visitedLocations = locations.filter((location) =>
+      visitedTrackings.some((tracking) => tracking.location_id === location.id)
+    );
+    navigation.navigate("Visited Locations", { locations: visitedLocations });
   };
 
   // Effect to check proximity when user location or project locations change
@@ -107,11 +116,11 @@ const ProjectHome = ({ navigation, route }) => {
         onPress={handleVisitedLocationsPress}
       >
         <Text>
-          Locations visited {visitedLocations.length}/{locations.length}
+          Locations visited {visitedTrackings.length}/{locations.length}
         </Text>
       </TouchableOpacity>
       <View>
-        <Text>User Score: {projectScore}</Text>
+        <Text>User Score: {score}</Text>
       </View>
     </View>
   );

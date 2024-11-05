@@ -101,7 +101,6 @@ export const updateTracking = (id, updatedTrackingData) =>
   apiRequest(`tracking?id=eq.${id}`, "PATCH", updatedTrackingData);
 export const deleteTracking = (id) =>
   apiRequest(`tracking?id=eq.${id}`, "DELETE");
-
 export const getTrackingsByProjectId = async (projectId) => {
   return apiRequest(`tracking?project_id=eq.${projectId}`);
 };

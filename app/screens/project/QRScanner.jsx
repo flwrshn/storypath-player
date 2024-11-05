@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Button, Alert } from "react-native";
 import React, { useState, useContext } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { UserContext } from "@/components/context/UserContext";
-import { handleLocationProximity } from "@/utils/proximityHandler";
 
 const QRScanner = ({ navigation, route }) => {
   const { project, locations } = route.params;
@@ -43,6 +42,19 @@ const QRScanner = ({ navigation, route }) => {
       </View>
     );
   }
+
+  const handleLocationProximity = (location, navigate) => {
+    Alert.alert("Success!", `You are within ${location.location_name}.`, [
+      {
+        text: "Dismiss", // Option to do nothing and close the alert
+        style: "cancel",
+      },
+      {
+        text: "Learn More",
+        onPress: () => navigate("Location Detail", { location }),
+      },
+    ]);
+  };
 
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);

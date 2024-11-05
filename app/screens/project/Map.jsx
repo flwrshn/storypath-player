@@ -14,11 +14,22 @@ const styles = StyleSheet.create({
   },
 });
 
-// TODO: if project homescreen display is "Display all locations" also display all the locations
+// TODO: Check if map works when QR codes
 
 const Map = ({ route }) => {
-  const { userLocation, visitedLocations } = useContext(UserContext);
+  const { userLocation, getTrackingsByProject } = useContext(UserContext);
   const { project, locations } = route.params;
+  const { visitedTrackings } = getTrackingsByProject(project.id);
+
+  // Determine locations to display based on homescreen_display setting
+  const displayLocationsList =
+    project.homescreen_display === "Display all locations"
+      ? locations
+      : locations.filter((location) =>
+          visitedTrackings.some(
+            (tracking) => tracking.location_id === location.id
+          )
+        );
 
   const initialRegion = {
     latitude: userLocation ? userLocation.latitude : -27.4975, // Default to UQ St Lucia
@@ -27,10 +38,6 @@ const Map = ({ route }) => {
     longitudeDelta: 0.05,
   };
 
-  const visitedLocationsList = locations.filter((location) =>
-    visitedLocations[project.id]?.locations.has(location.id)
-  );
-
   return (
     <View style={styles.container}>
       <MapView
@@ -38,42 +45,42 @@ const Map = ({ route }) => {
         initialRegion={initialRegion}
         showsUserLocation={true}
       >
-        {visitedLocationsList.length > 0
-          ? // Map over visited locations
-            visitedLocationsList.map((location) => {
-              if (location.location_position) {
-                const coordinates = parseLocationPosition(
-                  location.location_position
-                );
+        {displayLocationsList.map((location) => {
+          const coordinates = parseLocationPosition(location.location_position);
+          // Check if the location is visited
+          const isVisited = visitedTrackings.some(
+            (tracking) => tracking.location_id === location.id
+          );
 
-                return (
-                  <View key={location.id}>
-                    <Circle
-                      center={coordinates}
-                      radius={50}
-                      strokeWidth={2}
-                      strokeColor="purple"
-                      fillColor="rgba(140, 20, 252,0.3)"
-                    />
-                    <Marker
-                      coordinate={coordinates}
-                      title={location.location_name}
-                      description={`Points: ${location.score_points}`}
-                      pinColor="red"
-                    />
-                  </View>
-                );
-              }
-              return null;
-            })
-          : // Show only the user's location if no locations are visited
-            userLocation && (
-              <Marker
-                coordinate={userLocation}
-                title="Your Location"
-                pinColor="blue"
+          return (
+            <View key={location.id}>
+              <Circle
+                center={coordinates}
+                radius={50}
+                strokeWidth={2}
+                strokeColor="purple"
+                fillColor="rgba(140, 20, 252, 0.3)"
               />
-            )}
+              <Marker
+                coordinate={coordinates}
+                title={location.location_name}
+                description={`${
+                  isVisited ? "Visited" : "Not Visited"
+                } - Points: ${location.score_points}`}
+                pinColor="purple"
+              />
+            </View>
+          );
+        })}
+
+        {/* Show only the user's location if no locations are displayed */}
+        {displayLocationsList.length === 0 && userLocation && (
+          <Marker
+            coordinate={userLocation}
+            title="Your Location"
+            pinColor="blue"
+          />
+        )}
       </MapView>
     </View>
   );
