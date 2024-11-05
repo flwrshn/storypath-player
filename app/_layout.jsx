@@ -5,7 +5,7 @@ import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { getLocations } from "@/services/api";
-import { UserProvider } from "@/components/context/UserContext";
+import { UserProvider, UserContext } from "@/components/context/UserContext";
 
 // Import screens
 import Home from "./screens/Home";

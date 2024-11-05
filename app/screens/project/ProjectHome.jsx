@@ -5,18 +5,35 @@ import { UserContext } from "@/components/context/UserContext";
 import { getDistance } from "geolib";
 import LocationCard from "@/components/LocationCard";
 import { parseLocationPosition } from "@/utils/parseLocation";
-import { useNavigation } from "expo-router";
 import { handleLocationProximity } from "@/utils/proximityHandler";
+import { getTrackings } from "@/services/api";
 
-const ProjectHome = ({ route }) => {
-  const navigation = useNavigation();
+// Track user location
+// If the user location is within the bounds of a location and not in visited locations
+// Make a tracking
+// Update the user's visited locations
+
+const ProjectHome = ({ navigation, route }) => {
   const { project, locations } = route.params;
-  const { userLocation, visitedLocations, addTracking, score } =
-    useContext(UserContext);
+  const {
+    user,
+    userLocation,
+    visitedLocations,
+    projectScore,
+    addTracking,
+    setProjectTrackings,
+  } = useContext(UserContext);
 
-  const visitedLocationsList = locations.filter((location) =>
-    visitedLocations[project.id]?.locations.has(location.id)
-  );
+  // Set the visited locations and score for the current project
+  useEffect(() => {
+    setProjectTrackings(project.id);
+  }, [project.id]);
+
+  // Get the current project's visited locations and score
+  const projectData = visitedLocations[project.id] || {
+    locations: [],
+    score: 0,
+  };
 
   // Check if user is within 50 meters of any location
   const checkProximityToLocations = () => {
@@ -25,10 +42,12 @@ const ProjectHome = ({ route }) => {
         location.location_position
       );
       const distance = getDistance(userLocation, locationCoordinates);
-      // If user is within 50m of the location and it's not already visited
+
+      // Track if user is within 50m of the location and it's not already visited
       if (
         distance <= 50 &&
-        !visitedLocations[project.id]?.locations.has(location.id)
+        project.participant_scoring === "Number of Locations Entered" &&
+        !projectData.locations.includes(location.id)
       ) {
         addTracking(project.id, location.id, location.score_points);
         handleLocationProximity(location, navigation.navigate);
@@ -38,13 +57,17 @@ const ProjectHome = ({ route }) => {
 
   // Navigate to VisitedLocations and pass all locations
   const handleVisitedLocationsPress = () => {
+    const visitedLocationsFull = visitedLocations
+      .map((locationId) =>
+        locations.find((location) => location.id === locationId)
+      )
+      .filter((location) => location !== undefined);
     navigation.navigate("Visited Locations", {
-      locations: visitedLocationsList,
+      locations: visitedLocationsFull,
     });
   };
 
-  // Effect to check proximity
-  // FIXME: Need for locations?
+  // Effect to check proximity when user location or project locations change
   useEffect(() => {
     if (userLocation && locations.length > 0) {
       checkProximityToLocations();
@@ -54,7 +77,9 @@ const ProjectHome = ({ route }) => {
   return (
     <View>
       <Text>Project: {project.title}</Text>
+      <Text>Scoring: {project.participant_scoring}</Text>
       <Text>Instructions: {project.instructions}</Text>
+      <Text>Home screen display: {project.homescreen_display}</Text>
       {project.homescreen_display === "Display initial clue" ? (
         <View>
           <Text>The initial clue is: {project.initial_clue}</Text>
@@ -82,13 +107,11 @@ const ProjectHome = ({ route }) => {
         onPress={handleVisitedLocationsPress}
       >
         <Text>
-          Locations visited {visitedLocations[project.id]?.locations.size || 0}/
-          {locations.length}
+          Locations visited {visitedLocations.length}/{locations.length}
         </Text>
       </TouchableOpacity>
-      {/* FIXME: Need to have project specific score */}
       <View>
-        <Text>User Score: {score}</Text>
+        <Text>User Score: {projectScore}</Text>
       </View>
     </View>
   );

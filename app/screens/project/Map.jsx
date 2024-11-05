@@ -14,6 +14,8 @@ const styles = StyleSheet.create({
   },
 });
 
+// TODO: if project homescreen display is "Display all locations" also display all the locations
+
 const Map = ({ route }) => {
   const { userLocation, visitedLocations } = useContext(UserContext);
   const { project, locations } = route.params;

@@ -1,4 +1,3 @@
-// components/context/UserContext.js
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
@@ -10,16 +9,25 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState("");
   const [userLocation, setUserLocation] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [visitedLocations, setVisitedLocations] = useState(new Set());
-  const [score, setScore] = useState(0); // User score
+  const [projectData, setProjectData] = useState({});
+  const [visitedLocations, setVisitedLocations] = useState([]);
+  const [projectScore, setProjectScore] = useState(0);
 
   // Load the user data from AsyncStorage when the app starts
   const loadUserData = async () => {
     try {
       const savedUsername = await AsyncStorage.getItem("participant_username");
+      const savedProjectData = await AsyncStorage.getItem("projectData");
+
       if (savedUsername) {
         setUser(savedUsername);
-        await fetchTrackings(savedUsername);
+
+        // Load project data from AsyncStorage if available
+        if (savedProjectData) {
+          setProjectData(JSON.parse(savedProjectData));
+        } else {
+          await fetchTrackings(savedUsername); // Fetch trackings for the user
+        }
       }
     } catch (error) {
       console.error("Failed to load user data:", error);
@@ -28,26 +36,46 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // Fetch trackings and update state
+  // Fetch trackings for the user
   const fetchTrackings = async (username) => {
     try {
       const trackings = await getTrackings(username);
-      const projectVisitedLocations = trackings.reduce((acc, tracking) => {
+
+      // Organize trackings by project
+      const organisedData = trackings.reduce((acc, tracking) => {
         const { project_id, location_id, points } = tracking;
+
+        // Initialize project if it doesn't exist
         if (!acc[project_id]) {
-          acc[project_id] = { locations: new Set(), points: 0 };
+          acc[project_id] = { locations: [], score: 0 };
         }
-        acc[project_id].locations.add(location_id);
-        acc[project_id].points += points;
+
+        // Add location if not already present
+        if (!acc[project_id].locations.includes(location_id)) {
+          acc[project_id].locations.push(location_id);
+        }
+
+        // Update score
+        acc[project_id].score += points;
+
         return acc;
       }, {});
-      setVisitedLocations(projectVisitedLocations);
+
+      setProjectData(organisedData); // Set the organised data
+      await AsyncStorage.setItem("projectData", JSON.stringify(organisedData));
     } catch (error) {
       console.error("Failed to fetch trackings:", error);
     }
   };
 
-  // Update score and track location visits
+  // Set the visited locations and score for a specific project
+  const setProjectTrackings = (projectId) => {
+    const project = projectData[projectId] || { locations: [], score: 0 };
+    setVisitedLocations([...project.locations]);
+    setProjectScore(project.score);
+  };
+
+  // Add a new tracking and update state
   const addTracking = async (projectId, locationId, points) => {
     try {
       // Create a tracking entry in the API
@@ -58,23 +86,35 @@ export const UserProvider = ({ children }) => {
       });
 
       // Update state
-      setVisitedLocations((prev) => {
+      setProjectData((prev) => {
         const updated = { ...prev };
+
         if (!updated[projectId]) {
-          updated[projectId] = { locations: new Set(), points: 0 };
+          updated[projectId] = { locations: [], score: 0 };
         }
-        updated[projectId].locations.add(locationId);
-        updated[projectId].points += points;
+
+        // Add location if not already present
+        if (!updated[projectId].locations.includes(locationId)) {
+          updated[projectId].locations.push(locationId);
+        }
+
+        // Update score
+        updated[projectId].score += points;
+
         return updated;
       });
 
-      setScore((prev) => prev + points);
+      // Save updated project data to AsyncStorage
+      await AsyncStorage.setItem("projectData", JSON.stringify(projectData));
+
+      // Update the current project's visited locations and score
+      setProjectTrackings(projectId);
     } catch (error) {
       console.error("Failed to add tracking:", error);
     }
   };
 
-  // Conditionally start watching the user's location based on project scoring
+  // Conditionally start watching the user's location
   const startWatchingLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status === "granted") {
@@ -120,10 +160,12 @@ export const UserProvider = ({ children }) => {
         setUser,
         loading,
         userLocation,
+        projectData,
         visitedLocations,
+        projectScore,
         addTracking,
-        score,
         fetchTrackings,
+        setProjectTrackings,
       }}
     >
       {children}
