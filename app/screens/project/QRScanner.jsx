@@ -59,7 +59,6 @@ const QRScanner = ({ navigation, route }) => {
 
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
-
     // Checking if it's a QR code
     if (type !== "org.iso.QRCode") {
       Alert.alert("Error", "Please scan a QR code!", [
@@ -88,19 +87,16 @@ const QRScanner = ({ navigation, route }) => {
       return;
     }
 
+    // Track if user exists and
+    // the scoring is based on QR codes and
+    // if it is not visited
     if (
-      visitedTrackings.some(
-        (tracking) => tracking.location_id.toString() === scannedLocationId
+      user &&
+      project.participant_scoring === "Number of Scanned QR Codes" &&
+      !visitedTrackings.some(
+        (tracking) => tracking.location_id === scannedLocation.id
       )
     ) {
-      Alert.alert("Error", "This location has already been visited!", [
-        { text: "OK", onPress: () => setScanned(false) },
-      ]);
-      return;
-    }
-
-    // Track only if scoring is by QR code and username exists
-    if (project.participant_scoring === "Number of Scanned QR Codes" && user) {
       const trackingData = {
         project_id: project.id,
         location_id: scannedLocation.id,
