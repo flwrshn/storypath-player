@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, Button, Alert } from "react-native";
 import React, { useState, useContext } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { UserContext } from "@/components/context/UserContext";
+import { createTracking } from "@/services/api";
 
 const QRScanner = ({ navigation, route }) => {
   const { project, locations } = route.params;
-  const { user, loading, addTracking, visitedLocations } =
-    useContext(UserContext);
+  const { user, loading, getTrackingsByProject } = useContext(UserContext);
+  const { visitedTrackings } = getTrackingsByProject(project.id);
 
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState(null);
@@ -67,7 +68,7 @@ const QRScanner = ({ navigation, route }) => {
       return;
     }
 
-    // QR code data is stored as project_id, location_id i.e. 1,3 so we split the data
+    // Data is stored as project_id, location_id i.e. 1,3 so we split the data
     const [scannedProjectId, scannedLocationId] = data.split(",");
 
     if (scannedProjectId === project.id) {
@@ -87,8 +88,12 @@ const QRScanner = ({ navigation, route }) => {
       return;
     }
 
-    if (visitedLocations[project.id]?.locations.has(location.id)) {
-      Alert.alert("Error", "Already scanned!", [
+    if (
+      visitedTrackings.some(
+        (tracking) => tracking.location_id.toString() === scannedLocationId
+      )
+    ) {
+      Alert.alert("Error", "This location has already been visited!", [
         { text: "OK", onPress: () => setScanned(false) },
       ]);
       return;
@@ -96,7 +101,15 @@ const QRScanner = ({ navigation, route }) => {
 
     // Track only if scoring is by QR code and username exists
     if (project.participant_scoring === "Number of Scanned QR Codes" && user) {
-      addTracking(project.id, scannedLocation.id, scannedLocation.score_points);
+      const trackingData = {
+        project_id: project.id,
+        location_id: scannedLocation.id,
+        participant_username: user,
+        points: scannedLocation.score_points,
+      };
+
+      await createTracking(trackingData);
+      console.log("Tracking recorded.");
     }
     handleLocationProximity(scannedLocation, navigation.navigate);
     setScannedData(data);

@@ -27,6 +27,7 @@ const ProjectHome = ({ navigation, route }) => {
           // the scoring is based on location and
           // if it is not visited
           if (
+            user &&
             distance <= 50 &&
             project.participant_scoring === "Number of Locations Entered" &&
             !visitedTrackings.some(
