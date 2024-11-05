@@ -42,10 +42,6 @@ const ProjectHome = ({ navigation, route }) => {
 
             await createTracking(trackingData);
             console.log("Tracking recorded.");
-
-            const trackings = await getTrackings(user);
-            console.log("Trackings:", trackings);
-
             handleLocationProximity(location, navigation.navigate);
           }
         })
