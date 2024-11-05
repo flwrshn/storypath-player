@@ -125,6 +125,7 @@ export const UserProvider = ({ children }) => {
         userLocation,
         trackings,
         getTrackingsByProject,
+        addTracking,
       }}
     >
       {children}
