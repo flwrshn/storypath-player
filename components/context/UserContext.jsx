@@ -37,15 +37,45 @@ export const UserProvider = ({ children }) => {
   };
 
   // Function to get trackings by project_id
-  const getTrackingsByProject = (projectId) => {
-    const visitedTrackings = trackings.filter(
-      (tracking) => tracking.project_id === projectId
-    );
-    const score = visitedTrackings.reduce(
-      (total, tracking) => total + tracking.points,
-      0
-    );
-    return { visitedTrackings, score };
+  const getTrackingsByProject = async (projectId) => {
+    try {
+      // Fetch the latest trackings for the user
+      await fetchTrackings(user);
+
+      // Filter trackings for the specific project
+      const visitedTrackings = trackings.filter(
+        (tracking) => tracking.project_id === projectId
+      );
+
+      const score = visitedTrackings.reduce(
+        (total, tracking) => total + tracking.points,
+        0
+      );
+
+      return { visitedTrackings, score };
+    } catch (error) {
+      console.error("Failed to get trackings by project:", error);
+      return { visitedTrackings: [], score: 0 };
+    }
+  };
+
+  // Add a new tracking and update state
+  const addTracking = async (projectId, locationId, points) => {
+    try {
+      // Create tracking in the backend
+      await createTracking({
+        project_id: projectId,
+        location_id: locationId,
+        participant_username: user,
+        points,
+      });
+
+      // Update local trackings by fetching the latest data
+      await fetchTrackings(user);
+      console.log("Tracking created and trackings updated.");
+    } catch (error) {
+      console.error("Failed to add tracking:", error);
+    }
   };
 
   // Conditionally start watching the user's location
