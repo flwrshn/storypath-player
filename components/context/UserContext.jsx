@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
-import { getTrackings } from "@/services/api";
+import { getTrackings, createTracking } from "@/services/api";
 
 export const UserContext = createContext();
 
@@ -10,6 +10,7 @@ export const UserProvider = ({ children }) => {
   const [userLocation, setUserLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [trackings, setTrackings] = useState([]);
+  const [projectScores, setProjectScores] = useState({});
 
   // Load the user data from AsyncStorage when the app starts
   const loadUserData = async () => {
@@ -31,38 +32,31 @@ export const UserProvider = ({ children }) => {
     try {
       const trackings = await getTrackings(username);
       setTrackings(trackings);
+      updateProjectScores(trackings);
     } catch (error) {
       console.error("Failed to fetch trackings:", error);
     }
   };
 
-  // Function to get trackings by project_id
-  const getTrackingsByProject = async (projectId) => {
-    try {
-      // Fetch the latest trackings for the user
-      await fetchTrackings(user);
-
-      // Filter trackings for the specific project
-      const visitedTrackings = trackings.filter(
-        (tracking) => tracking.project_id === projectId
-      );
-
-      const score = visitedTrackings.reduce(
-        (total, tracking) => total + tracking.points,
-        0
-      );
-
-      return { visitedTrackings, score };
-    } catch (error) {
-      console.error("Failed to get trackings by project:", error);
-      return { visitedTrackings: [], score: 0 };
-    }
+  // Update project scores based on trackings
+  const updateProjectScores = (trackings) => {
+    const scores = {};
+    trackings.forEach(({ project_id, points }) => {
+      scores[project_id] = (scores[project_id] || 0) + points;
+    });
+    setProjectScores(scores);
   };
 
   // Add a new tracking and update state
   const addTracking = async (projectId, locationId, points) => {
-    try {
-      // Create tracking in the backend
+    const alreadyTracked = trackings.some(
+      (tracking) =>
+        tracking.participant_username === user &&
+        tracking.project_id === projectId &&
+        tracking.location_id === locationId
+    );
+
+    if (!alreadyTracked) {
       await createTracking({
         project_id: projectId,
         location_id: locationId,
@@ -73,8 +67,8 @@ export const UserProvider = ({ children }) => {
       // Update local trackings by fetching the latest data
       await fetchTrackings(user);
       console.log("Tracking created and trackings updated.");
-    } catch (error) {
-      console.error("Failed to add tracking:", error);
+    } else {
+      console.log("This is a visited location. Not tracked.");
     }
   };
 
@@ -100,6 +94,16 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  // Watch for changes in the user state to restart location tracking
+  useEffect(() => {
+    if (user) {
+      fetchTrackings(user);
+      setProjectScores({});
+      // Restart location tracking when user changes
+      startWatchingLocation();
+    }
+  }, [user]);
+
   // Initialize user data and location tracking
   useEffect(() => {
     const initializeUserContext = async () => {
@@ -110,13 +114,6 @@ export const UserProvider = ({ children }) => {
     initializeUserContext();
   }, []);
 
-  // Watch for changes in the user state to restart location tracking
-  useEffect(() => {
-    if (user) {
-      startWatchingLocation(); // Restart location tracking when user changes
-    }
-  }, [user]);
-
   return (
     <UserContext.Provider
       value={{
@@ -124,7 +121,8 @@ export const UserProvider = ({ children }) => {
         loading,
         userLocation,
         trackings,
-        getTrackingsByProject,
+        projectScores,
+        setUser,
         addTracking,
       }}
     >

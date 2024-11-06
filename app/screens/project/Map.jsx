@@ -14,20 +14,19 @@ const styles = StyleSheet.create({
   },
 });
 
-// TODO: Check if map works when QR codes
-
 const Map = ({ route }) => {
-  const { userLocation, getTrackingsByProject } = useContext(UserContext);
+  const { userLocation, trackings } = useContext(UserContext);
   const { project, locations } = route.params;
-  const { visitedTrackings } = getTrackingsByProject(project.id);
 
   // Determine locations to display based on homescreen_display setting
   const displayLocationsList =
     project.homescreen_display === "Display all locations"
       ? locations
       : locations.filter((location) =>
-          visitedTrackings.some(
-            (tracking) => tracking.location_id === location.id
+          trackings.some(
+            (tracking) =>
+              tracking.project_id === project.id &&
+              tracking.location_id === location.id
           )
         );
 
@@ -47,9 +46,13 @@ const Map = ({ route }) => {
       >
         {displayLocationsList.map((location) => {
           const coordinates = parseLocationPosition(location.location_position);
+
           // Check if the location is visited
-          const isVisited = visitedTrackings.some(
-            (tracking) => tracking.location_id === location.id
+          const isVisited = trackings.some(
+            (tracking) =>
+              tracking.user === user &&
+              tracking.project_id === project.id &&
+              tracking.location_id === location.id
           );
 
           return (

@@ -3,12 +3,11 @@ import { View, Text, StyleSheet, Button, Alert } from "react-native";
 import React, { useState, useContext } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { UserContext } from "@/components/context/UserContext";
-import { createTracking } from "@/services/api";
+import { handleLocationProximity } from "@/utils/routeLocation";
 
 const QRScanner = ({ navigation, route }) => {
   const { project, locations } = route.params;
-  const { user, loading, getTrackingsByProject } = useContext(UserContext);
-  const { visitedTrackings } = getTrackingsByProject(project.id);
+  const { user, loading, addTracking } = useContext(UserContext);
 
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState(null);
@@ -44,19 +43,6 @@ const QRScanner = ({ navigation, route }) => {
     );
   }
 
-  const handleLocationProximity = (location, navigate) => {
-    Alert.alert("Success!", `You are within ${location.location_name}.`, [
-      {
-        text: "Dismiss", // Option to do nothing and close the alert
-        style: "cancel",
-      },
-      {
-        text: "Learn More",
-        onPress: () => navigate("Location Detail", { location }),
-      },
-    ]);
-  };
-
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     // Checking if it's a QR code
@@ -87,26 +73,14 @@ const QRScanner = ({ navigation, route }) => {
       return;
     }
 
-    // Track if user exists and
-    // the scoring is based on QR codes and
-    // if it is not visited
-    if (
-      user &&
-      project.participant_scoring === "Number of Scanned QR Codes" &&
-      !visitedTrackings.some(
-        (tracking) => tracking.location_id === scannedLocation.id
-      )
-    ) {
-      const trackingData = {
-        project_id: project.id,
-        location_id: scannedLocation.id,
-        participant_username: user,
-        points: scannedLocation.score_points,
-      };
-
-      await createTracking(trackingData);
-      console.log("Tracking recorded.");
+    if (user && project.participant_scoring === "Number of Scanned QR Codes") {
+      await addTracking(
+        project.id,
+        scannedLocation.id,
+        scannedLocation.score_points
+      );
     }
+    // Allow non-user's and non-scorer's to see location details
     handleLocationProximity(scannedLocation, navigation.navigate);
     setScannedData(data);
   };
