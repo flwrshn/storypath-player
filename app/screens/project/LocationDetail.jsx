@@ -1,15 +1,23 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { WebView } from "react-native-webview";
 
 const LocationDetail = ({ route }) => {
   const { location } = route.params;
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>{location.location_name}</Text>
       <Text style={styles.info}>Points: {location.score_points}</Text>
-      <Text style={styles.info}>{location.description}</Text>
-    </View>
+      {location.location_content ? (
+        <WebView
+          source={{ html: location.location_content }}
+          style={{
+            height: 400,
+          }}
+        />
+      ) : null}
+    </ScrollView>
   );
 };
 
