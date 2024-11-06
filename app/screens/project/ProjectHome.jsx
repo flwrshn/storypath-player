@@ -1,5 +1,5 @@
 // app/screens/ProjectHome.jsx
-import { View, Text, Alert, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import React, { useContext, useEffect } from "react";
 import { UserContext } from "@/components/context/UserContext";
 import { getDistance } from "geolib";
